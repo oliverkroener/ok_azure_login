@@ -9,11 +9,13 @@
             "email": "ok@oliver-kroener.de"
         }
     ],
-    "version": "0.0.1",
+    "version": "1.0.0",
     "require": {
-        "php": ">=7.4",
-        "typo3/cms-core": "^11.5 || ^12.4",
-        "microsoft/microsoft-graph": "^2"
+        "php": "^8.1",
+        "typo3/cms-core": "^12.4 || ^13.4 || ^14.0",
+        "typo3/cms-extbase": "^12.4 || ^13.4 || ^14.0",
+        "microsoft/microsoft-graph": "^2",
+        "microsoft/kiota-authentication-phpleague": "^1"
     },
     "autoload": {
         "psr-4": {

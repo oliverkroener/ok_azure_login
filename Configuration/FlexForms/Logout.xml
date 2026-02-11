@@ -1,0 +1,51 @@
+<T3DataStructure>
+    <sheets>
+        <sDEF>
+            <ROOT>
+                <sheetTitle>Settings</sheetTitle>
+                <type>array</type>
+                <el>
+                    <settings.buttonTheme>
+                        <label>Button theme</label>
+                        <config>
+                            <type>select</type>
+                            <renderType>selectSingle</renderType>
+                            <items>
+                                <numIndex index="0">
+                                    <label>Dark (recommended)</label>
+                                    <value>dark</value>
+                                </numIndex>
+                                <numIndex index="1">
+                                    <label>Light</label>
+                                    <value>light</value>
+                                </numIndex>
+                            </items>
+                            <default>dark</default>
+                        </config>
+                    </settings.buttonTheme>
+                    <settings.microsoftSignOut>
+                        <label>Also sign out from Microsoft</label>
+                        <config>
+                            <type>check</type>
+                            <items>
+                                <numIndex index="0">
+                                    <label>Redirect through Microsoft logout endpoint</label>
+                                </numIndex>
+                            </items>
+                            <default>0</default>
+                        </config>
+                    </settings.microsoftSignOut>
+                    <settings.redirectUrl>
+                        <label>Redirect URL after logout (leave empty for site root)</label>
+                        <config>
+                            <type>input</type>
+                            <size>50</size>
+                            <eval>trim</eval>
+                            <placeholder>https://example.com/</placeholder>
+                        </config>
+                    </settings.redirectUrl>
+                </el>
+            </ROOT>
+        </sDEF>
+    </sheets>
+</T3DataStructure>

@@ -7,18 +7,13 @@ $EM_CONF[$_EXTKEY] = [
     'author' => 'Oliver Kroener',
     'author_email' => 'ok@oliver-kroener.de',
     'author_company' => 'Oliver Kroener',
-    'state' => 'beta',
-    'version' => '0.0.1',
+    'state' => 'stable',
+    'version' => '1.0.0',
     'constraints' => [
         'depends' => [
-            'typo3' => '11.5.0-12.4.99',
+            'typo3' => '12.4.0-14.99.99',
         ],
         'conflicts' => [],
         'suggests' => [],
-    ],
-    'autoload' => [
-        'psr-4' => [
-            'OliverKroener\\OkAzureLogin\\' => 'Classes/',
-        ],
     ],
 ];

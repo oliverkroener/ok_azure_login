@@ -1,10 +1,59 @@
 <f:layout name="Default" />
 
 <f:section name="content">
-    <h2><f:translate key="tx_okazurelogin.name">Login with Azure/Microsoft 365</f:translate></h2>
-    <button class="btn btn-primary btn-outline">
-        <a href="https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize?client_id={clientId}&response_type=code&redirect_uri={redirectUri}&response_mode=query&scope=openid%20profile%20User.Read">
-            <f:translate key="tx_okazurelogin.loginlink">Login with Azure</f:translate>
-        </a>
-    </button>
+    <a href="{authorizeUrl}" class="ms-login-button ms-login-button--{f:if(condition: settings.buttonTheme, then: settings.buttonTheme, else: 'dark')}">
+        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" class="ms-login-button__logo">
+            <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+            <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+            <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+            <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+        </svg>
+        <span class="ms-login-button__text">
+            <f:translate key="tx_okazurelogin.loginlink">Sign in with Microsoft</f:translate>
+        </span>
+    </a>
+
+    <style>
+        .ms-login-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px;
+            height: 41px;
+            border: none;
+            border-radius: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1;
+            text-decoration: none;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        .ms-login-button:hover {
+            text-decoration: none;
+            opacity: 0.9;
+        }
+        .ms-login-button--dark {
+            background-color: #2F2F2F;
+            color: #FFFFFF;
+        }
+        .ms-login-button--dark:hover {
+            color: #FFFFFF;
+        }
+        .ms-login-button--light {
+            background-color: #FFFFFF;
+            color: #5E5E5E;
+            border: 1px solid #8C8C8C;
+        }
+        .ms-login-button--light:hover {
+            color: #5E5E5E;
+        }
+        .ms-login-button__logo {
+            flex-shrink: 0;
+        }
+        .ms-login-button__text {
+            white-space: nowrap;
+        }
+    </style>
 </f:section>

@@ -1,0 +1,30 @@
+<T3DataStructure>
+    <sheets>
+        <sDEF>
+            <ROOT>
+                <sheetTitle>Settings</sheetTitle>
+                <type>array</type>
+                <el>
+                    <settings.buttonTheme>
+                        <label>Button theme</label>
+                        <config>
+                            <type>select</type>
+                            <renderType>selectSingle</renderType>
+                            <items>
+                                <numIndex index="0">
+                                    <label>Dark (recommended)</label>
+                                    <value>dark</value>
+                                </numIndex>
+                                <numIndex index="1">
+                                    <label>Light</label>
+                                    <value>light</value>
+                                </numIndex>
+                            </items>
+                            <default>dark</default>
+                        </config>
+                    </settings.buttonTheme>
+                </el>
+            </ROOT>
+        </sDEF>
+    </sheets>
+</T3DataStructure>

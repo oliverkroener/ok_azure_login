@@ -1,0 +1,14 @@
+# cat=azure/basic/010; type=string; label=Tenant ID: Microsoft Entra (Azure AD) Tenant ID
+tenantId =
+
+# cat=azure/basic/020; type=string; label=Client ID: Application (client) ID from Azure App Registration
+clientId =
+
+# cat=azure/basic/030; type=string; label=Client Secret: Client secret value from Azure App Registration
+clientSecret =
+
+# cat=azure/basic/040; type=string; label=Redirect URI (Frontend): OAuth callback URL for frontend login (e.g. https://example.com/azure-login/callback)
+redirectUriFrontend =
+
+# cat=azure/basic/050; type=string; label=Redirect URI (Backend): OAuth callback URL for backend login (e.g. https://example.com/typo3/azure-login/callback)
+redirectUriBackend =

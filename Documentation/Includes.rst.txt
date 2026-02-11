@@ -1,0 +1,4 @@
+..  This file is included by all other rst files in this documentation.
+
+..  |extension_key| replace:: ok_azure_login
+..  |extension_name| replace:: Azure Login

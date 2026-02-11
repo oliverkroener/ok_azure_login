@@ -1,37 +1,10 @@
-plugin.tx_okazurelogin {
+plugin.tx_okazurelogin_login {
     settings {
-        tenantId = {$plugin.tx_okazurelogin.settings.tenantId}
-        clientId = {$plugin.tx_okazurelogin.settings.clientId}
-        clientSecret = {$plugin.tx_okazurelogin.settings.clientSecret}
-        redirectUri = {$plugin.tx_okazurelogin.settings.redirectUri}
-    }
-
-    features {
-        skipDefaultArguments = 1
-    }
-
-    persistence {
-        storagePid = {$plugin.tx_okazurelogin.persistence.storagePid}
     }
 
     view {
-        templateRootPaths.0 = EXT:ok_azure_login/Resources/Private/Templates/
-        partialRootPaths.0 = EXT:ok_azure_login/Resources/Private/Partials/
-        layoutRootPaths.0 = EXT:ok_azure_login/Resources/Private/Layouts/
-    }
-
-    mvc {
-        callDefaultActionIfActionCantBeResolved = 1
+        templateRootPaths.0 = {$plugin.tx_okazurelogin_login.view.templateRootPath}
+        partialRootPaths.0 = {$plugin.tx_okazurelogin_login.view.partialRootPath}
+        layoutRootPaths.0 = {$plugin.tx_okazurelogin_login.view.layoutRootPath}
     }
 }
-
-tt_content.list.20.ok_azure_login = USER
-tt_content.list.20.ok_azure_login {
-    userFunc = TYPO3\CMS\Extbase\Core\Bootstrap->run
-    extensionName = OkAzureLogin
-    pluginName = Login
-    vendorName = OliverKroener
-    settings =< plugin.tx_okazurelogin.settings
-}
-
-

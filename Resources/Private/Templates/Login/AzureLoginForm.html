@@ -1,0 +1,40 @@
+<html
+    xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    data-namespace-typo3-fluid="true"
+>
+
+<f:layout name="Login" />
+
+<f:section name="loginFormFields">
+    <div class="form-group text-center" style="padding: 20px 0;">
+        <a href="{authorizeUrl}" style="
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 12px;
+            height: 41px;
+            background-color: #2F2F2F;
+            color: #FFFFFF;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-size: 15px;
+            font-weight: 600;
+            line-height: 1;
+            text-decoration: none;
+            border: none;
+            border-radius: 0;
+            box-sizing: border-box;
+        ">
+            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" style="flex-shrink: 0;">
+                <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+                <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+                <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+                <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+            </svg>
+            <span style="white-space: nowrap;">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:backendLogin.button">Sign in with Microsoft</f:translate>
+            </span>
+        </a>
+    </div>
+</f:section>
+
+</html>

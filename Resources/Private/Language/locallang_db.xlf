@@ -2,14 +2,17 @@
 <xliff version="1.2">
     <file source-language="en" datatype="plaintext" original="messages" date="2023-03-18T12:00:00Z" product-name="ok_azure_login">
         <body>
-            <trans-unit id="tt_content.login_type" xml:space="preserve">
-                <source>Login Type</source>
+            <trans-unit id="tx_okazurelogin.name" xml:space="preserve">
+                <source>Azure Login</source>
             </trans-unit>
-            <trans-unit id="tt_content.login_type.frontend" xml:space="preserve">
-                <source>Frontend Login</source>
+            <trans-unit id="tx_okazurelogin.description" xml:space="preserve">
+                <source>Login button for Microsoft Entra ID (Azure AD) authentication</source>
             </trans-unit>
-            <trans-unit id="tt_content.login_type.backend" xml:space="preserve">
-                <source>Backend Login</source>
+            <trans-unit id="tx_okazurelogin_logout.name" xml:space="preserve">
+                <source>Azure Logout</source>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin_logout.description" xml:space="preserve">
+                <source>Logout button for Microsoft Entra ID (Azure AD) authentication</source>
             </trans-unit>
         </body>
     </file>

@@ -8,9 +8,11 @@ services:
     resource: '../Classes/*'
     exclude: '../Classes/Domain/Model/*'
 
-  OliverKroener\OkAzureLogin\Authentication\AzureLoginAuthService:
+  OliverKroener\OkAzureLogin\LoginProvider\AzureLoginProvider:
+    public: true
+
+  OliverKroener\OkAzureLogin\EventListener\AzureRequestTokenListener:
     tags:
-      - name: 'typo3.authentication'
-        priority: 50
-        subType: 'getUserBE'
-        position: 'before'
+      - name: event.listener
+        identifier: 'ok-azure-login/request-token'
+        event: TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent
