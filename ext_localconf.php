@@ -8,10 +8,7 @@ use OliverKroener\OkAzureLogin\Authentication\AzureLoginAuthService;
 use OliverKroener\OkAzureLogin\Controller\LoginController;
 use OliverKroener\OkAzureLogin\Controller\LogoutController;
 use OliverKroener\OkAzureLogin\LoginProvider\AzureLoginProvider;
-use TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider;
-use TYPO3\CMS\Core\Imaging\IconRegistry;
 use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
 // Frontend plugin (FE-only)
@@ -56,19 +53,6 @@ ExtensionManagementUtility::addService(
         'exec' => '',
         'className' => AzureLoginAuthService::class,
     ]
-);
-
-// Register icon for the backend login provider
-$iconRegistry = GeneralUtility::makeInstance(IconRegistry::class);
-$iconRegistry->registerIcon(
-    'ext-ok-azure-login',
-    SvgIconProvider::class,
-    ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg']
-);
-$iconRegistry->registerIcon(
-    'ext-ok-azure-login-microsoft',
-    SvgIconProvider::class,
-    ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/MicrosoftLogo.svg']
 );
 
 // Backend login provider – replaces default UsernamePasswordLoginProvider

@@ -19,18 +19,20 @@
     </div>
 </f:if>
 
-<ul class="nav nav-tabs mb-4">
-    <li class="nav-item">
-        <a class="nav-link" href="{frontendUrl}">
-            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.frontend" />
-        </a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link active" href="{backendUrl}">
-            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.backend" />
-        </a>
-    </li>
-</ul>
+<f:if condition="{id}">
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <a class="nav-link" href="{frontendUrl}">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.frontend" />
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link active" href="{backendUrl}">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.backend" />
+            </a>
+        </li>
+    </ul>
+</f:if>
 
 <div class="callout callout-info">
     <div class="callout-body">

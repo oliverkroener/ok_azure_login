@@ -14,8 +14,8 @@ use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Http\RedirectResponse;
-use TYPO3\CMS\Core\Imaging\Icon;
 use TYPO3\CMS\Core\Imaging\IconFactory;
+use TYPO3\CMS\Core\Imaging\IconSize;
 use TYPO3\CMS\Core\Localization\LanguageService;
 use TYPO3\CMS\Core\Messaging\FlashMessage;
 use TYPO3\CMS\Core\Messaging\FlashMessageService;
@@ -62,13 +62,7 @@ class ConfigurationController
             $view->getDocHeaderComponent()->setMetaInformation($pageInfo);
         }
 
-        if ($id === 0) {
-            $view->assign('noPageSelected', true);
-            return $view->renderResponse('Backend/Configuration/Edit');
-        }
-
-        // Backend tab redirects to the list view
-        if ($context === 'backend') {
+        if ($id === 0 || $context === 'backend') {
             return new RedirectResponse(
                 (string)$this->uriBuilder->buildUriFromRoute('web_okazurelogin.backendList', ['id' => $id])
             );
@@ -380,7 +374,7 @@ class ConfigurationController
             ->setValue('1')
             ->setShowLabelText(true)
             ->setForm('azureConfigForm')
-            ->setIcon($this->iconFactory->getIcon('actions-document-save', Icon::SIZE_SMALL));
+            ->setIcon($this->iconFactory->getIcon('actions-document-save', IconSize::SMALL));
 
         $buttonBar->addButton($saveButton, ButtonBar::BUTTON_POSITION_LEFT, 2);
     }
