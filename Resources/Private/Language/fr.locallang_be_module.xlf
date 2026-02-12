@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xliff version="1.2">
+    <file source-language="en" target-language="fr" datatype="plaintext" original="messages" date="2026-02-12T00:00:00Z" product-name="ok_azure_login">
+        <header/>
+        <body>
+            <trans-unit id="mlang_tabs_tab" xml:space="preserve">
+                <source>Azure Login</source>
+                <target>Connexion Azure</target>
+            </trans-unit>
+            <trans-unit id="mlang_labels_tablabel" xml:space="preserve">
+                <source>Azure Login Configuration</source>
+                <target>Configuration Connexion Azure</target>
+            </trans-unit>
+            <trans-unit id="mlang_labels_tabdescr" xml:space="preserve">
+                <source>Manage Microsoft Entra ID (Azure AD) credentials per site.</source>
+                <target>G&#xe9;rer les identifiants Microsoft Entra ID (Azure AD) par site.</target>
+            </trans-unit>
+            <trans-unit id="module.title" xml:space="preserve">
+                <source>Azure Login Configuration</source>
+                <target>Configuration Connexion Azure</target>
+            </trans-unit>
+            <trans-unit id="label.noPageSelected" xml:space="preserve">
+                <source>Please select a page from the page tree.</source>
+                <target>Veuillez s&#xe9;lectionner une page dans l'arborescence.</target>
+            </trans-unit>
+            <trans-unit id="label.noSiteFound" xml:space="preserve">
+                <source>No TYPO3 site configuration found for this page. Please create a site configuration first.</source>
+                <target>Aucune configuration de site TYPO3 trouv&#xe9;e pour cette page. Veuillez d'abord cr&#xe9;er une configuration de site.</target>
+            </trans-unit>
+            <trans-unit id="label.siteIdentifier" xml:space="preserve">
+                <source>Site</source>
+                <target>Site</target>
+            </trans-unit>
+            <trans-unit id="label.siteRootPageId" xml:space="preserve">
+                <source>Site Root Page ID</source>
+                <target>ID de la page racine</target>
+            </trans-unit>
+            <trans-unit id="label.context.frontend" xml:space="preserve">
+                <source>Frontend</source>
+                <target>Frontend</target>
+            </trans-unit>
+            <trans-unit id="label.context.backend" xml:space="preserve">
+                <source>Backend</source>
+                <target>Backend</target>
+            </trans-unit>
+            <trans-unit id="label.context.backend.info" xml:space="preserve">
+                <source>Backend login configuration for this site. Each site with valid backend credentials will show a separate login button.</source>
+                <target>Configuration de connexion backend pour ce site. Chaque site avec des identifiants backend valides affichera un bouton de connexion s&#xe9;par&#xe9;.</target>
+            </trans-unit>
+            <trans-unit id="label.backendLoginLabel" xml:space="preserve">
+                <source>Login Button Label</source>
+                <target>Libell&#xe9; du bouton de connexion</target>
+            </trans-unit>
+            <trans-unit id="label.backendLoginLabel.description" xml:space="preserve">
+                <source>Header shown above the login button on the backend login page (e.g. company name). If empty, the site identifier is used.</source>
+                <target>En-t&#xea;te affich&#xe9; au-dessus du bouton de connexion sur la page de connexion backend (ex. nom de l'entreprise). Si vide, l'identifiant du site est utilis&#xe9;.</target>
+            </trans-unit>
+            <trans-unit id="label.tenantId" xml:space="preserve">
+                <source>Tenant ID</source>
+                <target>ID du locataire</target>
+            </trans-unit>
+            <trans-unit id="label.tenantId.description" xml:space="preserve">
+                <source>Microsoft Entra Directory (Tenant) ID</source>
+                <target>ID du r&#xe9;pertoire Microsoft Entra (locataire)</target>
+            </trans-unit>
+            <trans-unit id="label.clientId" xml:space="preserve">
+                <source>Client ID</source>
+                <target>ID client</target>
+            </trans-unit>
+            <trans-unit id="label.clientId.description" xml:space="preserve">
+                <source>Application (Client) ID from Azure App Registration</source>
+                <target>ID d'application (client) de l'enregistrement d'application Azure</target>
+            </trans-unit>
+            <trans-unit id="label.clientSecret" xml:space="preserve">
+                <source>Client Secret</source>
+                <target>Secret client</target>
+            </trans-unit>
+            <trans-unit id="label.clientSecret.description" xml:space="preserve">
+                <source>Client secret value from Azure App Registration</source>
+                <target>Valeur du secret client de l'enregistrement d'application Azure</target>
+            </trans-unit>
+            <trans-unit id="label.clientSecret.existing" xml:space="preserve">
+                <source>A client secret is stored (encrypted). Leave empty to keep it, or enter a new value to replace it.</source>
+                <target>Un secret client est stock&#xe9; (chiffr&#xe9;). Laissez vide pour le conserver, ou entrez une nouvelle valeur pour le remplacer.</target>
+            </trans-unit>
+            <trans-unit id="label.redirectUriFrontend" xml:space="preserve">
+                <source>Redirect URI (Frontend)</source>
+                <target>URI de redirection (Frontend)</target>
+            </trans-unit>
+            <trans-unit id="label.redirectUriFrontend.description" xml:space="preserve">
+                <source>OAuth callback URL for frontend login (e.g. https://example.com/azure-login/callback)</source>
+                <target>URL de rappel OAuth pour la connexion frontend (ex. https://example.com/azure-login/callback)</target>
+            </trans-unit>
+            <trans-unit id="label.redirectUriBackend" xml:space="preserve">
+                <source>Redirect URI (Backend)</source>
+                <target>URI de redirection (Backend)</target>
+            </trans-unit>
+            <trans-unit id="label.redirectUriBackend.description" xml:space="preserve">
+                <source>OAuth callback URL for backend login (e.g. https://example.com/typo3/azure-login/callback)</source>
+                <target>URL de rappel OAuth pour la connexion backend (ex. https://example.com/typo3/azure-login/callback)</target>
+            </trans-unit>
+            <trans-unit id="warning.encryptionKeyMissing.title" xml:space="preserve">
+                <source>Encryption Key Missing</source>
+                <target>Cl&#xe9; de chiffrement manquante</target>
+            </trans-unit>
+            <trans-unit id="warning.encryptionKeyMissing.body" xml:space="preserve">
+                <source>The TYPO3 encryption key ($GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey']) is not set. The client secret cannot be encrypted without it. Please configure the encryption key in the Install Tool before saving credentials.</source>
+                <target>La cl&#xe9; de chiffrement TYPO3 ($GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey']) n'est pas d&#xe9;finie. Le secret client ne peut pas &#xea;tre chiffr&#xe9; sans elle. Veuillez configurer la cl&#xe9; de chiffrement dans l'Install Tool avant d'enregistrer les identifiants.</target>
+            </trans-unit>
+            <trans-unit id="message.saved.title" xml:space="preserve">
+                <source>Configuration Saved</source>
+                <target>Configuration enregistr&#xe9;e</target>
+            </trans-unit>
+            <trans-unit id="message.saved.body" xml:space="preserve">
+                <source>Azure Login configuration has been saved successfully.</source>
+                <target>La configuration de connexion Azure a &#xe9;t&#xe9; enregistr&#xe9;e avec succ&#xe8;s.</target>
+            </trans-unit>
+            <trans-unit id="message.deleted.title" xml:space="preserve">
+                <source>Configuration Deleted</source>
+                <target>Configuration supprim&#xe9;e</target>
+            </trans-unit>
+            <trans-unit id="message.deleted.body" xml:space="preserve">
+                <source>The backend login configuration has been deleted.</source>
+                <target>La configuration de connexion backend a &#xe9;t&#xe9; supprim&#xe9;e.</target>
+            </trans-unit>
+            <trans-unit id="button.addBackendConfig" xml:space="preserve">
+                <source>Add Backend Login Configuration</source>
+                <target>Ajouter une configuration de connexion backend</target>
+            </trans-unit>
+            <trans-unit id="button.backToList" xml:space="preserve">
+                <source>Back to list</source>
+                <target>Retour &#xe0; la liste</target>
+            </trans-unit>
+            <trans-unit id="label.noBackendConfigs" xml:space="preserve">
+                <source>No backend login configurations found. Click "Add Backend Login Configuration" to create one.</source>
+                <target>Aucune configuration de connexion backend trouv&#xe9;e. Cliquez sur &#xab; Ajouter une configuration de connexion backend &#xbb; pour en cr&#xe9;er une.</target>
+            </trans-unit>
+            <trans-unit id="confirm.delete.title" xml:space="preserve">
+                <source>Delete Configuration</source>
+                <target>Supprimer la configuration</target>
+            </trans-unit>
+            <trans-unit id="confirm.delete.message" xml:space="preserve">
+                <source>Are you sure you want to delete this backend login configuration? This action cannot be undone.</source>
+                <target>&#xca;tes-vous s&#xfb;r de vouloir supprimer cette configuration de connexion backend ? Cette action est irr&#xe9;versible.</target>
+            </trans-unit>
+            <trans-unit id="confirm.delete.button" xml:space="preserve">
+                <source>Delete</source>
+                <target>Supprimer</target>
+            </trans-unit>
+        </body>
+    </file>
+</xliff>

@@ -1,4 +1,5 @@
 <html
+    xmlns:core="http://typo3.org/ns/TYPO3/CMS/Core/ViewHelpers"
     xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
     data-namespace-typo3-fluid="true"
 >
@@ -6,34 +7,135 @@
 <f:layout name="Login" />
 
 <f:section name="loginFormFields">
-    <div class="form-group text-center" style="padding: 20px 0;">
-        <a href="{authorizeUrl}" style="
-            display: inline-flex;
-            align-items: center;
-            gap: 12px;
-            padding: 0 12px;
-            height: 41px;
-            background-color: #2F2F2F;
-            color: #FFFFFF;
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            font-size: 15px;
-            font-weight: 600;
-            line-height: 1;
-            text-decoration: none;
-            border: none;
-            border-radius: 0;
-            box-sizing: border-box;
-        ">
-            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" style="flex-shrink: 0;">
-                <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
-                <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
-                <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
-                <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
-            </svg>
-            <span style="white-space: nowrap;">
-                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:backendLogin.button">Sign in with Microsoft</f:translate>
+    <f:be.pageRenderer
+        includeJavaScriptModules="{
+            0: '@typo3/backend/user-pass-login.js'
+        }"
+    />
+
+    <f:if condition="{azureLogins}">
+        <f:for each="{azureLogins}" as="azureLogin">
+            <div class="form-group" style="padding: 0 0 8px 0;">
+                <f:if condition="{azureLogin.label}">
+                    <div style="font-size: 12px; font-weight: 600; color: #666; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; text-align: center;">
+                        {azureLogin.label}
+                    </div>
+                </f:if>
+                <a href="{azureLogin.authorizeUrl}" style="
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 12px;
+                    padding: 12px;
+                    width: 100%;
+                    border: 1px solid #2F2F2F;
+                    background-color: #2F2F2F;
+                    color: #FFFFFF;
+                    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+                    font-size: 15px;
+                    font-weight: 600;
+                    line-height: 1;
+                    text-decoration: none;
+                    border-radius: 0;
+                    box-sizing: border-box;
+                ">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" style="flex-shrink: 0;">
+                        <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+                        <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+                        <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+                        <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+                    </svg>
+                    <span style="white-space: nowrap;">
+                        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:backendLogin.button">Sign in with Microsoft</f:translate>
+                    </span>
+                </a>
+            </div>
+        </f:for>
+        <div style="display: flex; align-items: center; gap: 12px; margin: 4px 0 16px 0;">
+            <hr style="flex: 1; border: none; border-top: 1px solid #ccc; margin: 0;" />
+            <span style="color: #888; font-size: 13px;">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:backendLogin.or">or</f:translate>
             </span>
-        </a>
+            <hr style="flex: 1; border: none; border-top: 1px solid #ccc; margin: 0;" />
+        </div>
+    </f:if>
+
+    <div class="form-group t3js-login-username-section" id="t3-login-username-section">
+        <div class="form-control-wrap">
+            <div class="form-control-holder">
+                <input
+                    type="text"
+                    id="t3-username"
+                    name="username"
+                    value="{presetUsername}"
+                    aria-label="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.username')}"
+                    placeholder="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.username')}"
+                    class="form-control form-control-clearable input-login t3js-clearable t3js-login-username-field"
+                    autofocus="autofocus"
+                    autocomplete="username"
+                    required="required"
+                    spellcheck="false"
+                    data-clearable-label="{f:translate(key: 'LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:labels.inputfield.clearButton.title')}"
+                />
+                <div role="status" class="form-notice-capslock hidden t3js-login-alert-capslock">
+                    <img
+                        aria-hidden="true"
+                        src="{images.capslock}"
+                        width="14"
+                        height="14"
+                        alt=""
+                        title="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.error.capslock')}"
+                    />
+                    <span class="visually-hidden"><f:translate key="LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.error.capslockStatus" /></span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group t3js-login-password-section" id="t3-login-password-section">
+        <div class="form-control-wrap">
+            <div class="form-control-holder">
+                <div class="input-group">
+                <input
+                    type="password"
+                    id="t3-password"
+                    name="p_field"
+                    value="{presetPassword}"
+                    aria-label="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.password')}"
+                    placeholder="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.password')}"
+                    class="form-control input-login t3js-clearable t3js-login-password-field"
+                    autocomplete="current-password"
+                    required="required"
+                    spellcheck="false"
+                    data-clearable-label="{f:translate(key: 'LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:labels.inputfield.clearButton.title')}"
+                />
+                <button type="button"
+                    class="t3js-login-toggle-password btn btn-outline-secondary hidden"
+                    aria-label="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.togglePassword')}"
+                >
+                    <core:icon identifier="actions-eye" size="small" />
+                </button>
+                <div role="status" class="form-notice-capslock hidden t3js-login-alert-capslock">
+                    <img
+                        aria-hidden="true"
+                        src="{images.capslock}"
+                        width="14"
+                        height="14"
+                        alt=""
+                        title="{f:translate(key: 'LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.error.capslock')}"
+                    />
+                    <span class="visually-hidden"><f:translate key="LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.error.capslockStatus" /></span>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</f:section>
+
+<f:section name="ResetPassword">
+    <div class="forgot-password my-3">
+        <div class="text-end">
+            <a href="{forgetPasswordUrl}"><f:translate key="LLL:EXT:backend/Resources/Private/Language/locallang.xlf:login.password_forget" /></a>
+        </div>
     </div>
 </f:section>
 

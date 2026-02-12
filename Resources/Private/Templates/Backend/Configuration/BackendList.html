@@ -1,0 +1,136 @@
+<html
+    xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    xmlns:core="http://typo3.org/ns/TYPO3/CMS/Core/ViewHelpers"
+    data-namespace-typo3-fluid="true"
+>
+
+<f:layout name="Module" />
+
+<f:section name="Content">
+
+<f:if condition="{encryptionKeyMissing}">
+    <div class="callout callout-danger">
+        <div class="callout-title">
+            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:warning.encryptionKeyMissing.title" />
+        </div>
+        <div class="callout-body">
+            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:warning.encryptionKeyMissing.body" />
+        </div>
+    </div>
+</f:if>
+
+<ul class="nav nav-tabs mb-4">
+    <li class="nav-item">
+        <a class="nav-link" href="{frontendUrl}">
+            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.frontend" />
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link active" href="{backendUrl}">
+            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.backend" />
+        </a>
+    </li>
+</ul>
+
+<div class="callout callout-info">
+    <div class="callout-body">
+        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.backend.info" />
+    </div>
+</div>
+
+<div class="mb-3">
+    <a href="{newUrl}" class="btn btn-primary">
+        <core:icon identifier="actions-add" size="small" />
+        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:button.addBackendConfig" />
+    </a>
+</div>
+
+<f:if condition="{configs}">
+    <f:then>
+        <div class="table-fit">
+            <table class="table table-striped table-hover">
+                <thead>
+                    <tr>
+                        <th><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.backendLoginLabel" /></th>
+                        <th><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.tenantId" /></th>
+                        <th><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientId" /></th>
+                        <th><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret" /></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <f:for each="{configs}" as="config">
+                        <tr>
+                            <td>
+                                <a href="{config.editUrl}">
+                                    <f:if condition="{config.backendLoginLabel}">
+                                        <f:then>{config.backendLoginLabel}</f:then>
+                                        <f:else><em style="color: #999;">—</em></f:else>
+                                    </f:if>
+                                </a>
+                            </td>
+                            <td><code style="font-size: 0.85em;">{config.tenantId}</code></td>
+                            <td><code style="font-size: 0.85em;">{config.clientId}</code></td>
+                            <td>
+                                <f:if condition="{config.hasSecret}">
+                                    <f:then>
+                                        <span class="text-success">
+                                            <core:icon identifier="actions-check" size="small" />
+                                        </span>
+                                    </f:then>
+                                    <f:else>
+                                        <span class="text-danger">
+                                            <core:icon identifier="actions-close" size="small" />
+                                        </span>
+                                    </f:else>
+                                </f:if>
+                            </td>
+                            <td class="col-control nowrap">
+                                <div class="btn-group">
+                                    <a href="{config.editUrl}" class="btn btn-default btn-sm" title="Edit">
+                                        <core:icon identifier="actions-open" size="small" />
+                                    </a>
+                                    <form action="{config.deleteUrl}" method="post" style="display: inline;"
+                                          id="deleteForm-{config.uid}">
+                                        <button type="button" class="btn btn-default btn-sm"
+                                                title="Delete"
+                                                data-delete-form-id="deleteForm-{config.uid}"
+                                                data-delete-title="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.delete.title')}"
+                                                data-delete-message="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.delete.message')}"
+                                                data-delete-cancel-text="{f:translate(key: 'LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:labels.cancel')}"
+                                                data-delete-confirm-text="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.delete.button')}">
+                                            <core:icon identifier="actions-edit-delete" size="small" />
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    </f:for>
+                </tbody>
+            </table>
+        </div>
+
+        <f:if condition="{totalPages} > 1">
+            <nav>
+                <ul class="pagination">
+                    <f:for each="{paginationUrls}" as="url" key="pageNum">
+                        <li class="page-item{f:if(condition: '{pageNum} == {currentPage}', then: ' active')}">
+                            <a class="page-link" href="{url}">{pageNum}</a>
+                        </li>
+                    </f:for>
+                </ul>
+            </nav>
+        </f:if>
+    </f:then>
+    <f:else>
+        <div class="callout callout-info">
+            <div class="callout-body">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.noBackendConfigs" />
+            </div>
+        </div>
+    </f:else>
+</f:if>
+
+</f:section>
+
+</html>

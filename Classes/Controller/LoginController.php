@@ -7,6 +7,7 @@ namespace OliverKroener\OkAzureLogin\Controller;
 use OliverKroener\OkAzureLogin\Service\AzureOAuthService;
 use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
@@ -18,6 +19,16 @@ class LoginController extends ActionController
 
     public function showAction(): ResponseInterface
     {
+        $site = $this->request->getAttribute('site');
+        if ($site instanceof Site) {
+            $this->azureOAuthService->setSiteRootPageId($site->getRootPageId());
+        }
+
+        if (!$this->azureOAuthService->isConfigured('frontend')) {
+            $this->view->assign('configurationError', true);
+            return $this->htmlResponse();
+        }
+
         $returnUrl = $this->request->getAttribute('normalizedParams')?->getRequestUri() ?? '/';
         $authorizeUrl = $this->azureOAuthService->buildAuthorizeUrl('frontend', $returnUrl);
 

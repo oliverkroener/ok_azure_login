@@ -1,0 +1,144 @@
+<html
+    xmlns:f="http://typo3.org/ns/TYPO3/CMS/Fluid/ViewHelpers"
+    xmlns:core="http://typo3.org/ns/TYPO3/CMS/Core/ViewHelpers"
+    data-namespace-typo3-fluid="true"
+>
+
+<f:layout name="Module" />
+
+<f:section name="Content">
+
+<f:if condition="{noPageSelected}">
+    <f:then>
+        <div class="callout callout-info">
+            <div class="callout-body">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.noPageSelected" />
+            </div>
+        </div>
+    </f:then>
+    <f:else>
+        <f:if condition="{noSiteFound}">
+            <f:then>
+                <div class="callout callout-warning">
+                    <div class="callout-body">
+                        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.noSiteFound" />
+                    </div>
+                </div>
+            </f:then>
+            <f:else>
+                <f:if condition="{encryptionKeyMissing}">
+                    <div class="callout callout-danger">
+                        <div class="callout-title">
+                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:warning.encryptionKeyMissing.title" />
+                        </div>
+                        <div class="callout-body">
+                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:warning.encryptionKeyMissing.body" />
+                        </div>
+                    </div>
+                </f:if>
+
+                <ul class="nav nav-tabs mb-4">
+                    <li class="nav-item">
+                        <a class="nav-link{f:if(condition: '{context} == \'frontend\'', then: ' active')}" href="{frontendUrl}">
+                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.frontend" />
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link{f:if(condition: '{context} == \'backend\'', then: ' active')}" href="{backendUrl}">
+                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.context.backend" />
+                        </a>
+                    </li>
+                </ul>
+
+                <form action="{saveUrl}" method="post" id="azureConfigForm" name="azureConfigForm">
+
+                    <div class="callout callout-info">
+                        <div class="callout-body">
+                            <strong><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.siteIdentifier" />:</strong>
+                            {siteIdentifier}
+                            &nbsp;|&nbsp;
+                            <strong><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.siteRootPageId" />:</strong>
+                            {siteRootPageId}
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label" for="tenantId">
+                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.tenantId" />
+                            </label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="tenantId" name="data[tenantId]"
+                                       value="{config.tenantId}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                                <div class="form-text">
+                                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.tenantId.description" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label" for="clientId">
+                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientId" />
+                            </label>
+                            <div class="col-sm-9">
+                                <input type="text" class="form-control" id="clientId" name="data[clientId]"
+                                       value="{config.clientId}" placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" />
+                                <div class="form-text">
+                                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientId.description" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label" for="clientSecret">
+                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret" />
+                            </label>
+                            <div class="col-sm-9">
+                                <input type="password" class="form-control" id="clientSecret" name="data[clientSecret]"
+                                       value="" autocomplete="new-password" />
+                                <div class="form-text">
+                                    <f:if condition="{hasExistingSecret}">
+                                        <f:then>
+                                            <span class="text-success">
+                                                <core:icon identifier="actions-check" size="small" />
+                                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret.existing" />
+                                            </span>
+                                        </f:then>
+                                        <f:else>
+                                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret.description" />
+                                        </f:else>
+                                    </f:if>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label" for="redirectUriFrontend">
+                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.redirectUriFrontend" />
+                            </label>
+                            <div class="col-sm-9">
+                                <input type="url" class="form-control" id="redirectUriFrontend" name="data[redirectUriFrontend]"
+                                       value="{config.redirectUriFrontend}" placeholder="https://example.com/azure-login/callback" />
+                                <div class="form-text">
+                                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.redirectUriFrontend.description" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <core:icon identifier="actions-document-save" size="small" />
+                            <f:translate key="LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:rm.saveDoc" />
+                        </button>
+                    </div>
+
+                </form>
+            </f:else>
+        </f:if>
+    </f:else>
+</f:if>
+
+</f:section>
+
+</html>

@@ -20,6 +20,7 @@ See the root `CLAUDE.md` for DDEV setup, composer commands, and testing infrastr
 ```bash
 # From the DDEV project (backend/ as composer root):
 ddev exec composer typo3:flush   # Clear caches after any config/class changes
+ddev typo3 database:updateschema  # Apply schema changes after modifying ext_tables.sql
 ```
 
 No package-level build, lint, or test commands exist yet. Use the parent monorepo's `composer ci:static` and `composer ci:tests` for quality checks.
@@ -30,9 +31,10 @@ No package-level build, lint, or test commands exist yet. Use the parent monorep
 
 The extension handles two login contexts (FE and BE) through a shared middleware-based OAuth flow:
 
-1. **User clicks "Sign in"** — authorize URL built by `AzureOAuthService::buildAuthorizeUrl()` with HMAC-signed state parameter
+1. **User clicks "Sign in"** — authorize URL built by `AzureOAuthService::buildAuthorizeUrl()` with HMAC-signed state parameter (includes `siteRootPageId` for per-site config)
 2. **Microsoft authenticates** — redirects back with `code` + `state` query params
 3. **`AzureOAuthMiddleware`** intercepts the callback (runs before TYPO3 auth middleware in both stacks):
+   - Resolves site context from request attribute (FE) or state payload (BE)
    - Validates HMAC-signed state
    - Exchanges code for user info via Microsoft Graph `me()` endpoint
    - Stores user data in `azure_login_user` request attribute
@@ -47,7 +49,14 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 
 - Extbase content element plugin (`okazurelogin_login`) with `LoginController::showAction`
 - Renders a "Login with Azure" button linking to the authorize URL
+- Shows configuration error message when Azure credentials are not set
 - Template: `Templates/Login/Show.html`, Layout: `Layouts/Default.html`
+
+### Frontend Logout
+
+- Extbase content element plugin (`okazurelogin_logout`) with `LogoutController`
+- FlexForm options: button theme, Microsoft sign-out redirect, custom redirect URL
+- Optional redirect to Microsoft logout endpoint (`login.microsoftonline.com/.../logout`)
 
 ### Backend Login
 
@@ -56,40 +65,95 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 - Template: `Templates/Login/AzureLoginForm.html` (uses `<f:layout name="Login" />` from EXT:backend)
 - Callback route: `/typo3/azure-login/callback` → `AzureCallbackController` (public access, no CSRF token required)
 - Implements both `render()` (v12) and `modifyView()` (v13+) for cross-version compatibility
+- Iterates all sites via `SiteFinder` to find first site with valid backend OAuth config
+
+### Backend Configuration Module
+
+- TYPO3 backend module under **Web** group with page tree navigation
+- Module key: `web_okazurelogin`, path: `/module/web/azure-login`
+- Admin-only access, icon: `ext-ok-azure-login-microsoft`
+- `ConfigurationController` with `editAction` (form) and `saveAction` (POST, PRG pattern)
+- Manages per-site Azure credentials stored in `tx_okazurelogin_configuration` table
+- Client secret encrypted with Sodium before storage, never sent to browser
+- Warns when TYPO3 encryption key is missing (red danger callout)
 
 ### Key Classes
 
 | Class | Purpose |
 |-------|---------|
-| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params |
-| `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
+| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params, per-site config resolution |
+| `Service/EncryptionService` | Sodium-based authenticated encryption for client secrets using `sodium_crypto_secretbox`; key derived from TYPO3 encryption key |
+| `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret |
+| `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
 | `Authentication/AzureLoginAuthService` | `AbstractAuthenticationService` subclass; looks up users by email in auth chain, returns 200 for Azure-authenticated requests |
 | `EventListener/AzureRequestTokenListener` | Creates valid CSRF `RequestToken` for Azure callbacks (TYPO3 v13+ compatibility) |
-| `LoginProvider/AzureLoginProvider` | Backend login provider; renders "Sign in with Microsoft" button on `/typo3/` login screen |
-| `Controller/LoginController` | Extbase FE controller; `showAction` renders the frontend login button |
+| `LoginProvider/AzureLoginProvider` | Backend login provider; renders "Sign in with Microsoft" button, resolves site context for backend OAuth |
+| `Controller/LoginController` | Extbase FE controller; `showAction` renders the frontend login button with configuration error handling |
+| `Controller/LogoutController` | Extbase FE controller; handles logout with optional Microsoft sign-out redirect |
+| `Controller/Backend/ConfigurationController` | Backend module controller; manages per-site Azure configuration with encryption key validation |
 | `Controller/Backend/AzureCallbackController` | Backend route handler; redirects to `/typo3` after successful OAuth callback |
 
 ### Configuration
 
-Azure credentials are configured via **Extension Configuration** (`ext_conf_template.txt`), not TypoScript:
+Azure credentials are stored **per site** in the database table `tx_okazurelogin_configuration`, with **Extension Configuration** (`ext_conf_template.txt`) as a fallback for backward compatibility.
 
-| Setting | Description |
-|---------|-------------|
-| `tenantId` | Microsoft Entra Directory (Tenant) ID |
-| `clientId` | Application (Client) ID from Azure App Registration |
-| `clientSecret` | Client Secret value |
-| `redirectUriFrontend` | OAuth callback URL for frontend login |
-| `redirectUriBackend` | OAuth callback URL for backend login (e.g., `https://example.com/typo3/azure-login/callback`) |
+#### Database Configuration (primary — per site)
+
+Managed via the backend module (Web > Azure Login). One record per site root page:
+
+| Column | Description |
+|--------|-------------|
+| `site_root_page_id` | TYPO3 site root page ID (unique key) |
+| `tenant_id` | Microsoft Entra Directory (Tenant) ID |
+| `client_id` | Application (Client) ID from Azure App Registration |
+| `client_secret_encrypted` | Sodium-encrypted client secret |
+| `redirect_uri_frontend` | OAuth callback URL for frontend login |
+| `redirect_uri_backend` | OAuth callback URL for backend login |
+
+#### Extension Configuration (fallback — global)
+
+Settings in `ext_conf_template.txt`: `tenantId`, `clientId`, `clientSecret`, `redirectUriFrontend`, `redirectUriBackend`.
+
+Used when no database record exists for the current site.
+
+#### Config Resolution Order
+
+`AzureOAuthService::getConfiguration()`:
+1. If `siteRootPageId > 0`, try database via `AzureConfigurationRepository`
+2. If no DB record or tenant ID is empty, fall back to `ExtensionConfiguration::get('ok_azure_login')`
+
+#### Encryption
+
+Client secrets are encrypted at rest using PHP Sodium (`sodium_crypto_secretbox`):
+- Key derived from `$GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey']` via `sodium_crypto_generichash`
+- Random nonce prepended to ciphertext, base64-encoded for storage
+- The backend module warns if the encryption key is not set
 
 TypoScript (`constants.typoscript` / `setup.typoscript`) only configures Fluid template paths for the FE plugin.
 
 ### Registration Points
 
-- **`ext_localconf.php`**: FE plugin, auth service (subtypes `getUserFE,authUserFE,getUserBE,authUserBE`, priority 82), icon registration, backend login provider
+- **`ext_localconf.php`**: FE plugins (login + logout), auth service (subtypes `getUserFE,authUserFE,getUserBE,authUserBE`, priority 82), icon registration (`ext-ok-azure-login-microsoft`), backend login provider
+- **`Configuration/Backend/Modules.php`**: Backend configuration module under Web group with page tree
+- **`Configuration/Backend/Routes.php`**: `/azure-login/callback` route with `'access' => 'public'`
 - **`Configuration/Services.yaml`**: DI config, `AzureLoginProvider` marked `public: true`, event listener registration
 - **`Configuration/RequestMiddlewares.php`**: `AzureOAuthMiddleware` in both `frontend` (before FE auth) and `backend` (after routing, before BE auth) stacks
-- **`Configuration/Backend/Routes.php`**: `/azure-login/callback` route with `'access' => 'public'`
 - **`Configuration/TCA/Overrides/tt_content.php`**: FE content element plugin registration, static TypoScript
+- **`Configuration/page.tsconfig`**: New Content Element Wizard entries under custom "Azure Login" group
+
+### Database Schema
+
+```sql
+CREATE TABLE tx_okazurelogin_configuration (
+    site_root_page_id int(11) unsigned DEFAULT '0' NOT NULL,
+    tenant_id varchar(255) DEFAULT '' NOT NULL,
+    client_id varchar(255) DEFAULT '' NOT NULL,
+    client_secret_encrypted text,
+    redirect_uri_frontend varchar(1024) DEFAULT '' NOT NULL,
+    redirect_uri_backend varchar(1024) DEFAULT '' NOT NULL,
+    UNIQUE KEY site_root (site_root_page_id)
+);
+```
 
 ### Logging
 
@@ -118,7 +182,13 @@ Both `AzureOAuthMiddleware` and `AzureLoginAuthService` implement `LoggerAwareIn
 
 ### Languages
 
-Translations: English (default), German (`de.locallang.xlf`), French (`fr.locallang.xlf`).
+Translations: English (default), German (`de.*.xlf`), French (`fr.*.xlf`).
+
+Language file groups:
+- `locallang.xlf` — Frontend plugin labels and messages
+- `locallang_db.xlf` — TCA, FlexForm, and content element wizard labels
+- `locallang_be_module.xlf` — Backend configuration module labels
+- `locallang_csh_tx_okazurelogin.xlf` — Context-sensitive help
 
 ### OAuth Scopes
 

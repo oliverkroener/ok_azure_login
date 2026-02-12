@@ -1,60 +1,69 @@
 <f:layout name="Default" />
 
 <f:section name="content">
-    <f:if condition="{logoutSuccess}">
-        <div class="ms-login-success" role="status">
-            <f:translate key="tx_okazurelogin.success.logout">You have been signed out successfully.</f:translate>
-        </div>
-    </f:if>
-    <f:if condition="{loginSuccess}">
-        <div class="ms-login-success" role="status">
-            <f:translate key="tx_okazurelogin.success.login">You have been signed in successfully.</f:translate>
-        </div>
-    </f:if>
-    <f:if condition="{loginError}">
-        <div class="ms-login-error" role="alert">
-            <f:switch expression="{loginError}">
-                <f:case value="exchange_failed">
-                    <f:translate key="tx_okazurelogin.error.exchange_failed">Authentication with Microsoft failed. Please try again.</f:translate>
-                </f:case>
-                <f:case value="auth_failed">
-                    <f:translate key="tx_okazurelogin.error.auth_failed">Login failed. Your account may not have access.</f:translate>
-                </f:case>
-                <f:defaultCase>
-                    <f:translate key="tx_okazurelogin.error.generic">Login failed. Please try again.</f:translate>
-                </f:defaultCase>
-            </f:switch>
-        </div>
-    </f:if>
-    <f:if condition="{isLoggedIn}">
+    <f:if condition="{configurationError}">
         <f:then>
-            <form method="post" action="">
-                <input type="hidden" name="logintype" value="logout" />
-                <button type="submit" class="ms-login-button ms-login-button--{f:if(condition: settings.buttonTheme, then: settings.buttonTheme, else: 'dark')}">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" class="ms-login-button__logo">
-                        <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
-                        <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
-                        <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
-                        <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
-                    </svg>
-                    <span class="ms-login-button__text">
-                        <f:translate key="tx_okazurelogin.logoutlink">Sign out</f:translate>
-                    </span>
-                </button>
-            </form>
+            <div class="ms-login-error" role="alert">
+                <f:translate key="tx_okazurelogin.error.configuration">Azure Login is not configured. Please contact the administrator.</f:translate>
+            </div>
         </f:then>
         <f:else>
-            <a href="{authorizeUrl}" class="ms-login-button ms-login-button--{f:if(condition: settings.buttonTheme, then: settings.buttonTheme, else: 'dark')}">
-                <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" class="ms-login-button__logo">
-                    <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
-                    <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
-                    <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
-                    <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
-                </svg>
-                <span class="ms-login-button__text">
-                    <f:translate key="tx_okazurelogin.loginlink">Sign in with Microsoft</f:translate>
-                </span>
-            </a>
+            <f:if condition="{logoutSuccess}">
+                <div class="ms-login-success" role="status">
+                    <f:translate key="tx_okazurelogin.success.logout">You have been signed out successfully.</f:translate>
+                </div>
+            </f:if>
+            <f:if condition="{loginSuccess}">
+                <div class="ms-login-success" role="status">
+                    <f:translate key="tx_okazurelogin.success.login">You have been signed in successfully.</f:translate>
+                </div>
+            </f:if>
+            <f:if condition="{loginError}">
+                <div class="ms-login-error" role="alert">
+                    <f:switch expression="{loginError}">
+                        <f:case value="exchange_failed">
+                            <f:translate key="tx_okazurelogin.error.exchange_failed">Authentication with Microsoft failed. Please try again.</f:translate>
+                        </f:case>
+                        <f:case value="auth_failed">
+                            <f:translate key="tx_okazurelogin.error.auth_failed">Login failed. Your account may not have access.</f:translate>
+                        </f:case>
+                        <f:defaultCase>
+                            <f:translate key="tx_okazurelogin.error.generic">Login failed. Please try again.</f:translate>
+                        </f:defaultCase>
+                    </f:switch>
+                </div>
+            </f:if>
+            <f:if condition="{isLoggedIn}">
+                <f:then>
+                    <form method="post" action="">
+                        <input type="hidden" name="logintype" value="logout" />
+                        <button type="submit" class="ms-login-button ms-login-button--{f:if(condition: settings.buttonTheme, then: settings.buttonTheme, else: 'dark')}">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" class="ms-login-button__logo">
+                                <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+                                <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+                                <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+                                <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+                            </svg>
+                            <span class="ms-login-button__text">
+                                <f:translate key="tx_okazurelogin.logoutlink">Sign out</f:translate>
+                            </span>
+                        </button>
+                    </form>
+                </f:then>
+                <f:else>
+                    <a href="{authorizeUrl}" class="ms-login-button ms-login-button--{f:if(condition: settings.buttonTheme, then: settings.buttonTheme, else: 'dark')}">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" class="ms-login-button__logo">
+                            <rect x="0" y="0" width="10" height="10" fill="#F25022"/>
+                            <rect x="11" y="0" width="10" height="10" fill="#7FBA00"/>
+                            <rect x="0" y="11" width="10" height="10" fill="#00A4EF"/>
+                            <rect x="11" y="11" width="10" height="10" fill="#FFB900"/>
+                        </svg>
+                        <span class="ms-login-button__text">
+                            <f:translate key="tx_okazurelogin.loginlink">Sign in with Microsoft</f:translate>
+                        </span>
+                    </a>
+                </f:else>
+            </f:if>
         </f:else>
     </f:if>
 

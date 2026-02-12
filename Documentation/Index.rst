@@ -51,6 +51,8 @@ Azure Login
     * **Authentication**: Uses OAuth 2.0 authorization code flow with HMAC-signed state parameter
     * **API Integration**: Retrieves user profile via Microsoft Graph API ``/me`` endpoint
     * **Flexibility**: Supports both frontend (``fe_users``) and backend (``be_users``) authentication
+    * **Per-site configuration**: Manage Azure credentials per TYPO3 site via a dedicated backend module
+    * **Security**: Client secrets are encrypted at rest using PHP Sodium
 
 ..  card-grid::
     :columns: 1
@@ -62,7 +64,7 @@ Azure Login
     ..  card:: :ref:`Installation <installation>`
 
         How to install this extension via Composer and add the
-        content element to your TYPO3 site.
+        content elements to your TYPO3 site.
 
     ..  card:: :ref:`Microsoft Entra ID Setup <azure>`
 
@@ -71,8 +73,8 @@ Azure Login
 
     ..  card:: :ref:`Configuration <configuration>`
 
-        Configure the extension settings in TYPO3 (Tenant ID, Client ID,
-        Client Secret, Redirect URIs).
+        Configure Azure credentials per site using the backend module
+        or via global extension settings as fallback.
 
     ..  card:: :ref:`Frequently Asked Questions (FAQ) <faq>`
 

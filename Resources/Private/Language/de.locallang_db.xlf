@@ -3,6 +3,10 @@
     <file source-language="en" target-language="de" datatype="plaintext" original="messages" date="2024-07-31T00:00:00Z" product-name="ok_azure_login">
         <header/>
         <body>
+            <trans-unit id="newContentElement.wizardItems.azurelogin" xml:space="preserve">
+                <source>Azure Login</source>
+                <target>Azure-Anmeldung</target>
+            </trans-unit>
             <trans-unit id="tx_okazurelogin.name" xml:space="preserve">
                 <source>Azure Login</source>
                 <target>Azure-Anmeldung</target>

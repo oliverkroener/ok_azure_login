@@ -1,0 +1,22 @@
+mod.wizards.newContentElement.wizardItems.azurelogin {
+    header = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:newContentElement.wizardItems.azurelogin
+    elements {
+        okazurelogin_login {
+            iconIdentifier = ext-ok-azure-login-microsoft
+            title = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.name
+            description = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.description
+            tt_content_defValues {
+                CType = okazurelogin_login
+            }
+        }
+        okazurelogin_logout {
+            iconIdentifier = ext-ok-azure-login-microsoft
+            title = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.name
+            description = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.description
+            tt_content_defValues {
+                CType = okazurelogin_logout
+            }
+        }
+    }
+    show = okazurelogin_login, okazurelogin_logout
+}

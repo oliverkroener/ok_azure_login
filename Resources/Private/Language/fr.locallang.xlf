@@ -23,6 +23,14 @@
                 <source>Sign in with Microsoft</source>
                 <target>Se connecter avec Microsoft</target>
             </trans-unit>
+            <trans-unit id="backendLogin.or" xml:space="preserve">
+                <source>or</source>
+                <target>ou</target>
+            </trans-unit>
+            <trans-unit id="backendLogin.notConfigured" xml:space="preserve">
+                <source>Azure Login is not configured for backend login. Please set up the backend credentials in the Azure Login module.</source>
+                <target>Azure Login n'est pas configur&#xe9; pour la connexion backend. Veuillez configurer les identifiants backend dans le module Azure Login.</target>
+            </trans-unit>
             <trans-unit id="tx_okazurelogin.logoutlink" xml:space="preserve">
                 <source>Sign out</source>
                 <target>Se d&#xe9;connecter</target>
@@ -46,6 +54,10 @@
             <trans-unit id="tx_okazurelogin.error.generic" xml:space="preserve">
                 <source>Login failed. Please try again.</source>
                 <target>La connexion a &#xe9;chou&#xe9;. Veuillez r&#xe9;essayer.</target>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.configuration" xml:space="preserve">
+                <source>Azure Login is not configured. Please contact the administrator.</source>
+                <target>Azure Login n'est pas configur&#xe9;. Veuillez contacter l'administrateur.</target>
             </trans-unit>
         </body>
     </file>

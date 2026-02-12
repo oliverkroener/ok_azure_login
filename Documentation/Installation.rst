@@ -20,6 +20,12 @@ Install the extension via Composer:
 
     composer req oliverkroener/ok-azure-login
 
+After installation, update the database schema to create the configuration table:
+
+..  code-block:: bash
+
+    vendor/bin/typo3 database:updateschema
+
 See also `Installing extensions, TYPO3 Getting started <https://docs.typo3.org/permalink/t3start:installing-extensions>`_.
 
 ..  _installation-typoscript:
@@ -35,14 +41,37 @@ Include the static TypoScript
 
 ..  _installation-content-element:
 
-Add the content element
-=======================
+Add the content elements
+========================
 
-#. Go to the :guilabel:`Page` module and select the page where the login button should appear
-#. Add a new content element of type **Azure Login**
-#. In the element settings, choose the **Login Type**:
+The extension provides two content elements, available under the **Azure Login**
+group in the New Content Element Wizard:
 
-   - **Frontend Login** — authenticates against ``fe_users`` records
-   - **Backend Login** — authenticates against ``be_users`` records and redirects to ``/typo3``
+Azure Login
+    Renders a "Sign in with Microsoft" button. When a user authenticates via
+    Microsoft Entra ID, the extension matches their email to an existing
+    ``fe_users`` record and logs them in.
 
+Azure Logout
+    Renders a "Sign out" button for logged-in users. Can optionally redirect
+    to the Microsoft logout endpoint to sign the user out of Microsoft as well.
+
+To add them:
+
+#. Go to the :guilabel:`Page` module and select the page where the login or logout button should appear
+#. Click :guilabel:`Create new content element`
+#. Select from the **Azure Login** group: either **Azure Login** or **Azure Logout**
+#. Configure the element settings (button theme, redirect URL, etc.)
 #. Save and clear caches
+
+..  _installation-backend-login:
+
+Backend login
+=============
+
+The extension automatically registers a backend login provider. Once configured
+(see :ref:`Configuration <configuration>`), a "Sign in with Microsoft" button
+appears as a separate tab on the TYPO3 backend login screen at ``/typo3/``.
+
+No additional setup is needed for backend login beyond configuring the Azure
+credentials with a backend redirect URI.

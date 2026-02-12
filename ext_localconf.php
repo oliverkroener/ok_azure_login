@@ -65,11 +65,18 @@ $iconRegistry->registerIcon(
     SvgIconProvider::class,
     ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg']
 );
+$iconRegistry->registerIcon(
+    'ext-ok-azure-login-microsoft',
+    SvgIconProvider::class,
+    ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/MicrosoftLogo.svg']
+);
 
-// Backend login provider
+// Backend login provider – replaces default UsernamePasswordLoginProvider
+// since our template already includes both the Azure button and username/password fields.
+unset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1433416747]);
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['azure-login'] = [
     'provider' => AzureLoginProvider::class,
-    'sorting' => 25,
+    'sorting' => 75,
     'iconIdentifier' => 'ext-ok-azure-login',
     'label' => 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:backendLogin.label',
 ];

@@ -17,6 +17,12 @@
             <trans-unit id="backendLogin.button" xml:space="preserve">
                 <source>Sign in with Microsoft</source>
             </trans-unit>
+            <trans-unit id="backendLogin.or" xml:space="preserve">
+                <source>or</source>
+            </trans-unit>
+            <trans-unit id="backendLogin.notConfigured" xml:space="preserve">
+                <source>Azure Login is not configured for backend login. Please set up the backend credentials in the Azure Login module.</source>
+            </trans-unit>
             <trans-unit id="tx_okazurelogin.logoutlink" xml:space="preserve">
                 <source>Sign out</source>
             </trans-unit>
@@ -34,6 +40,9 @@
             </trans-unit>
             <trans-unit id="tx_okazurelogin.error.generic" xml:space="preserve">
                 <source>Login failed. Please try again.</source>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.configuration" xml:space="preserve">
+                <source>Azure Login is not configured. Please contact the administrator.</source>
             </trans-unit>
         </body>
     </file>

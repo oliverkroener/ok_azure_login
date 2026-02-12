@@ -29,9 +29,10 @@ Frequently Asked Questions (FAQ)
         :name: faq-frontend-backend
         :header-level: 2
 
-        Yes. When adding the Azure Login content element, choose **Frontend Login**
-        or **Backend Login** as the login type. Each type uses its own redirect
-        URI and authenticates against the corresponding user table.
+        Yes. For **frontend login**, add the **Azure Login** content element to a
+        page. For **backend login**, the extension automatically adds a "Sign in
+        with Microsoft" tab to the TYPO3 backend login screen. Both require their
+        own redirect URI configured in Microsoft Entra ID.
 
     ..  accordion-item:: Which Microsoft Graph API permissions are needed?
         :name: faq-permissions
@@ -45,9 +46,40 @@ Frequently Asked Questions (FAQ)
         :name: faq-configuration
         :header-level: 2
 
-        Go to :guilabel:`Admin Tools` > :guilabel:`Settings` >
+        The recommended method is the **backend module** at
+        :guilabel:`Web` > :guilabel:`Azure Login`. This allows per-site
+        configuration with encrypted client secret storage.
+
+        As a fallback, global credentials can be set via
+        :guilabel:`Admin Tools` > :guilabel:`Settings` >
         :guilabel:`Extension Configuration` > :guilabel:`ok_azure_login`.
+
         See chapter :ref:`configuration`.
+
+    ..  accordion-item:: Can I use different Azure credentials per site?
+        :name: faq-per-site
+        :header-level: 2
+
+        Yes. The backend module stores configuration per TYPO3 site root page.
+        Click on any page belonging to a site in the page tree, and the module
+        resolves the correct site automatically. Each site can have its own
+        Tenant ID, Client ID, Client Secret, and redirect URIs.
+
+    ..  accordion-item:: How is the client secret stored?
+        :name: faq-encryption
+        :header-level: 2
+
+        When configured via the backend module, the client secret is encrypted
+        using PHP Sodium (``sodium_crypto_secretbox``) before being stored in the
+        database. The encryption key is derived from TYPO3's
+        ``$GLOBALS['TYPO3_CONF_VARS']['SYS']['encryptionKey']``.
+
+        The secret is never displayed in the backend module after saving.
+
+        ..  warning::
+            If the TYPO3 encryption key is not set, the backend module shows a
+            warning. Secrets stored via Extension Configuration (fallback) are
+            **not** encrypted.
 
     ..  accordion-item:: Where can I get help?
         :name: faq-help

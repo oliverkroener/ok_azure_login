@@ -31,7 +31,7 @@ flow.
 3.  Add redirect URIs
 
     Under :guilabel:`Redirect URI`, select **Web** and add the callback URLs
-    that match your extension configuration:
+    that match your TYPO3 site:
 
     - Frontend: ``https://your-domain.com/your-login-page`` (the page containing the Azure Login content element)
     - Backend: ``https://your-domain.com/typo3/azure-login/callback``
@@ -42,14 +42,17 @@ flow.
         to the page where Microsoft redirects the user after authentication. The
         backend redirect URI uses the fixed route ``/typo3/azure-login/callback``.
 
+        If you run a multi-site setup with different domains, add redirect URIs
+        for each domain.
+
     Click :guilabel:`Register`.
 
 4.  Collect Tenant ID and Client ID
 
     On the :guilabel:`Overview` page, note down:
 
-    - **Directory (tenant) ID** — this is the ``tenantId``
-    - **Application (client) ID** — this is the ``clientId``
+    - **Directory (tenant) ID** -- this is the ``Tenant ID``
+    - **Application (client) ID** -- this is the ``Client ID``
 
     ..  attention::
         The **Client ID** is the Application ID on the overview page. Do **not**
@@ -63,7 +66,7 @@ flow.
     - Click :guilabel:`Add`
 
     ..  attention::
-        - Copy the **Secret Value** immediately after creation — it will not be shown again.
+        - Copy the **Secret Value** immediately after creation -- it will not be shown again.
         - Manage the expiration and renew the secret before it expires to maintain uninterrupted service.
         - The **Secret Value** is sensitive information. Store it securely and do not expose it in public repositories or logs.
 
@@ -71,9 +74,9 @@ flow.
 
     The extension uses the **authorization code flow** with **delegated permissions** (not application permissions). It requests the following scopes:
 
-    - ``openid`` — sign-in
-    - ``profile`` — basic user profile
-    - ``User.Read`` — read the signed-in user's profile (email, display name)
+    - ``openid`` -- sign-in
+    - ``profile`` -- basic user profile
+    - ``User.Read`` -- read the signed-in user's profile (email, display name)
 
     To configure:
 
@@ -85,5 +88,12 @@ flow.
 
     ..  note::
         Unlike server-to-server integrations, this extension authenticates on
-        behalf of the user. Only **delegated** permissions are needed —
+        behalf of the user. Only **delegated** permissions are needed --
         **application** permissions are not required.
+
+7.  Configure in TYPO3
+
+    Enter the collected credentials (Tenant ID, Client ID, Client Secret, redirect
+    URIs) in the TYPO3 backend module at :guilabel:`Web` > :guilabel:`Azure Login`.
+
+    See :ref:`Configuration <configuration>` for details.

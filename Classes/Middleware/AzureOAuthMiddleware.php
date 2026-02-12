@@ -13,6 +13,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\RedirectResponse;
+use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
@@ -43,6 +44,12 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
+        // Resolve site context for per-site configuration
+        $site = $request->getAttribute('site');
+        if ($site instanceof Site) {
+            $this->azureOAuthService->setSiteRootPageId($site->getRootPageId());
+        }
+
         $queryParams = $request->getQueryParams();
         $code = $queryParams['code'] ?? null;
         $stateParam = $queryParams['state'] ?? null;
@@ -61,6 +68,16 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
         if ($state === null) {
             $this->logger->debug('Azure OAuth state validation failed');
             return $handler->handle($request);
+        }
+
+        // Restore config context from state (for backend callbacks where site attribute may not be set)
+        $configUid = (int)($state['configUid'] ?? 0);
+        if ($configUid > 0) {
+            $this->azureOAuthService->setConfigUid($configUid);
+        }
+        $siteRootPageId = (int)($state['siteRootPageId'] ?? 0);
+        if ($siteRootPageId > 0) {
+            $this->azureOAuthService->setSiteRootPageId($siteRootPageId);
         }
 
         $loginType = $state['type'] ?? 'frontend';

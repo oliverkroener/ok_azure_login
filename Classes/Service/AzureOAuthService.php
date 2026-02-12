@@ -6,19 +6,47 @@ namespace OliverKroener\OkAzureLogin\Service;
 
 use Microsoft\Graph\GraphServiceClient;
 use Microsoft\Kiota\Authentication\Oauth\AuthorizationCodeContext;
+use OliverKroener\OkAzureLogin\Domain\Repository\AzureConfigurationRepository;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
 class AzureOAuthService
 {
     private const STATE_TTL = 600; // 10 minutes
 
+    private int $siteRootPageId = 0;
+    private int $configUid = 0;
+
     public function __construct(
         private readonly ExtensionConfiguration $extensionConfiguration,
+        private readonly AzureConfigurationRepository $configurationRepository,
     ) {}
+
+    public function setSiteRootPageId(int $siteRootPageId): void
+    {
+        $this->siteRootPageId = $siteRootPageId;
+    }
+
+    public function setConfigUid(int $configUid): void
+    {
+        $this->configUid = $configUid;
+    }
+
+    public function isConfigured(string $loginType = 'frontend'): bool
+    {
+        $config = $this->getConfiguration($loginType);
+        $redirectUri = $loginType === 'backend'
+            ? ($config['redirectUriBackend'] ?? '')
+            : ($config['redirectUriFrontend'] ?? '');
+
+        return ($config['tenantId'] ?? '') !== ''
+            && ($config['clientId'] ?? '') !== ''
+            && ($config['clientSecret'] ?? '') !== ''
+            && $redirectUri !== '';
+    }
 
     public function buildAuthorizeUrl(string $loginType, string $returnUrl): string
     {
-        $config = $this->getConfiguration();
+        $config = $this->getConfiguration($loginType);
         $tenantId = $config['tenantId'];
         $clientId = $config['clientId'];
 
@@ -49,7 +77,7 @@ class AzureOAuthService
      */
     public function exchangeCodeForUserInfo(string $code, string $loginType): array
     {
-        $config = $this->getConfiguration();
+        $config = $this->getConfiguration($loginType);
 
         $redirectUri = $loginType === 'backend'
             ? $config['redirectUriBackend']
@@ -77,6 +105,8 @@ class AzureOAuthService
         $payload = [
             'type' => $type,
             'returnUrl' => $returnUrl,
+            'siteRootPageId' => $this->siteRootPageId,
+            'configUid' => $this->configUid,
             'nonce' => bin2hex(random_bytes(16)),
             'exp' => time() + self::STATE_TTL,
         ];
@@ -88,7 +118,7 @@ class AzureOAuthService
     }
 
     /**
-     * @return array{type: string, returnUrl: string, nonce: string, exp: int}|null
+     * @return array{type: string, returnUrl: string, siteRootPageId: int, nonce: string, exp: int}|null
      */
     public function validateState(string $signedState): ?array
     {
@@ -123,10 +153,40 @@ class AzureOAuthService
     }
 
     /**
-     * @return array{tenantId: string, clientId: string, clientSecret: string, redirectUriFrontend: string, redirectUriBackend: string}
+     * @return array{tenantId: string, clientId: string, clientSecret: string, redirectUriFrontend: string, redirectUriBackend: string, backendLoginLabel: string}
      */
-    public function getConfiguration(): array
+    public function getConfiguration(string $loginType = 'frontend'): array
     {
+        // Backend config: try by uid first, then by siteRootPageId, then page 0, then ext_conf
+        if ($loginType === 'backend') {
+            if ($this->configUid > 0) {
+                $dbConfig = $this->configurationRepository->findByUid($this->configUid);
+                if ($dbConfig !== null && ($dbConfig['tenantId'] ?? '') !== '') {
+                    return $dbConfig;
+                }
+            }
+            if ($this->siteRootPageId > 0) {
+                $dbConfig = $this->configurationRepository->findBySiteRootPageId($this->siteRootPageId);
+                if ($dbConfig !== null && ($dbConfig['tenantId'] ?? '') !== '') {
+                    return $dbConfig;
+                }
+            }
+            $dbConfig = $this->configurationRepository->findBySiteRootPageId(0);
+            if ($dbConfig !== null && ($dbConfig['tenantId'] ?? '') !== '') {
+                return $dbConfig;
+            }
+            return (array)$this->extensionConfiguration->get('ok_azure_login');
+        }
+
+        // Frontend config: per-site
+        if ($this->siteRootPageId > 0) {
+            $dbConfig = $this->configurationRepository->findBySiteRootPageId($this->siteRootPageId);
+            if ($dbConfig !== null && ($dbConfig['tenantId'] ?? '') !== '') {
+                return $dbConfig;
+            }
+        }
+
+        // Fallback to extension configuration
         return (array)$this->extensionConfiguration->get('ok_azure_login');
     }
 
