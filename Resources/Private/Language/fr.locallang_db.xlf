@@ -1,39 +1,51 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xliff version="1.2">
-    <file source-language="en" datatype="plaintext" original="messages" date="2023-03-18T12:00:00Z" product-name="ok_azure_login">
+    <file source-language="en" target-language="fr" datatype="plaintext" original="messages" date="2024-07-31T00:00:00Z" product-name="ok_azure_login">
+        <header/>
         <body>
             <trans-unit id="tx_okazurelogin.name" xml:space="preserve">
                 <source>Azure Login</source>
+                <target>Connexion Azure</target>
             </trans-unit>
             <trans-unit id="tx_okazurelogin.description" xml:space="preserve">
                 <source>Login button for Microsoft Entra ID (Azure AD) authentication</source>
+                <target>Bouton de connexion pour l'authentification Microsoft Entra ID (Azure AD)</target>
             </trans-unit>
             <trans-unit id="tx_okazurelogin_logout.name" xml:space="preserve">
                 <source>Azure Logout</source>
+                <target>D&#xe9;connexion Azure</target>
             </trans-unit>
             <trans-unit id="tx_okazurelogin_logout.description" xml:space="preserve">
                 <source>Logout button for Microsoft Entra ID (Azure AD) authentication</source>
+                <target>Bouton de d&#xe9;connexion pour l'authentification Microsoft Entra ID (Azure AD)</target>
             </trans-unit>
             <trans-unit id="flexform.sheetTitle.settings" xml:space="preserve">
                 <source>Settings</source>
+                <target>Param&#xe8;tres</target>
             </trans-unit>
             <trans-unit id="flexform.buttonTheme" xml:space="preserve">
                 <source>Button theme</source>
+                <target>Th&#xe8;me du bouton</target>
             </trans-unit>
             <trans-unit id="flexform.buttonTheme.dark" xml:space="preserve">
                 <source>Dark (recommended)</source>
+                <target>Sombre (recommand&#xe9;)</target>
             </trans-unit>
             <trans-unit id="flexform.buttonTheme.light" xml:space="preserve">
                 <source>Light</source>
+                <target>Clair</target>
             </trans-unit>
             <trans-unit id="flexform.microsoftSignOut" xml:space="preserve">
                 <source>Also sign out from Microsoft</source>
+                <target>&#xc9;galement se d&#xe9;connecter de Microsoft</target>
             </trans-unit>
             <trans-unit id="flexform.microsoftSignOut.description" xml:space="preserve">
                 <source>Redirect through Microsoft logout endpoint</source>
+                <target>Rediriger via le point de d&#xe9;connexion Microsoft</target>
             </trans-unit>
             <trans-unit id="flexform.redirectUrl" xml:space="preserve">
                 <source>Redirect URL after logout (leave empty for site root)</source>
+                <target>URL de redirection apr&#xe8;s d&#xe9;connexion (laisser vide pour la racine du site)</target>
             </trans-unit>
         </body>
     </file>

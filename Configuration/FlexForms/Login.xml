@@ -2,21 +2,21 @@
     <sheets>
         <sDEF>
             <ROOT>
-                <sheetTitle>Settings</sheetTitle>
+                <sheetTitle>LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:flexform.sheetTitle.settings</sheetTitle>
                 <type>array</type>
                 <el>
                     <settings.buttonTheme>
-                        <label>Button theme</label>
+                        <label>LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:flexform.buttonTheme</label>
                         <config>
                             <type>select</type>
                             <renderType>selectSingle</renderType>
                             <items>
                                 <numIndex index="0">
-                                    <label>Dark (recommended)</label>
+                                    <label>LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:flexform.buttonTheme.dark</label>
                                     <value>dark</value>
                                 </numIndex>
                                 <numIndex index="1">
-                                    <label>Light</label>
+                                    <label>LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:flexform.buttonTheme.light</label>
                                     <value>light</value>
                                 </numIndex>
                             </items>

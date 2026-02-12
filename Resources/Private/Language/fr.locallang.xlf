@@ -27,6 +27,26 @@
                 <source>Sign out</source>
                 <target>Se d&#xe9;connecter</target>
             </trans-unit>
+            <trans-unit id="tx_okazurelogin.success.login" xml:space="preserve">
+                <source>You have been signed in successfully.</source>
+                <target>Vous avez &#xe9;t&#xe9; connect&#xe9; avec succ&#xe8;s.</target>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.success.logout" xml:space="preserve">
+                <source>You have been signed out successfully.</source>
+                <target>Vous avez &#xe9;t&#xe9; d&#xe9;connect&#xe9; avec succ&#xe8;s.</target>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.exchange_failed" xml:space="preserve">
+                <source>Authentication with Microsoft failed. Please try again.</source>
+                <target>L'authentification avec Microsoft a &#xe9;chou&#xe9;. Veuillez r&#xe9;essayer.</target>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.auth_failed" xml:space="preserve">
+                <source>Login failed. Your account may not have access.</source>
+                <target>La connexion a &#xe9;chou&#xe9;. Votre compte n'a peut-&#xea;tre pas acc&#xe8;s.</target>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.generic" xml:space="preserve">
+                <source>Login failed. Please try again.</source>
+                <target>La connexion a &#xe9;chou&#xe9;. Veuillez r&#xe9;essayer.</target>
+            </trans-unit>
         </body>
     </file>
 </xliff>

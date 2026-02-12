@@ -20,6 +20,21 @@
             <trans-unit id="tx_okazurelogin.logoutlink" xml:space="preserve">
                 <source>Sign out</source>
             </trans-unit>
+            <trans-unit id="tx_okazurelogin.success.login" xml:space="preserve">
+                <source>You have been signed in successfully.</source>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.success.logout" xml:space="preserve">
+                <source>You have been signed out successfully.</source>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.exchange_failed" xml:space="preserve">
+                <source>Authentication with Microsoft failed. Please try again.</source>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.auth_failed" xml:space="preserve">
+                <source>Login failed. Your account may not have access.</source>
+            </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.generic" xml:space="preserve">
+                <source>Login failed. Please try again.</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

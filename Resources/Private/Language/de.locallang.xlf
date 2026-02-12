@@ -27,6 +27,26 @@
         <source>Sign out</source>
         <target>Abmelden</target>
       </trans-unit>
+      <trans-unit id="tx_okazurelogin.success.login" xml:space="preserve">
+        <source>You have been signed in successfully.</source>
+        <target>Sie wurden erfolgreich angemeldet.</target>
+      </trans-unit>
+      <trans-unit id="tx_okazurelogin.success.logout" xml:space="preserve">
+        <source>You have been signed out successfully.</source>
+        <target>Sie wurden erfolgreich abgemeldet.</target>
+      </trans-unit>
+      <trans-unit id="tx_okazurelogin.error.exchange_failed" xml:space="preserve">
+        <source>Authentication with Microsoft failed. Please try again.</source>
+        <target>Authentifizierung mit Microsoft fehlgeschlagen. Bitte versuchen Sie es erneut.</target>
+      </trans-unit>
+      <trans-unit id="tx_okazurelogin.error.auth_failed" xml:space="preserve">
+        <source>Login failed. Your account may not have access.</source>
+        <target>Anmeldung fehlgeschlagen. Ihr Konto hat möglicherweise keinen Zugang.</target>
+      </trans-unit>
+      <trans-unit id="tx_okazurelogin.error.generic" xml:space="preserve">
+        <source>Login failed. Please try again.</source>
+        <target>Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

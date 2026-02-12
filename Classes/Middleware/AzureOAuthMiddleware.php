@@ -11,7 +11,9 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Http\RedirectResponse;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 /**
  * Intercepts OAuth callbacks from Microsoft Entra ID.
@@ -32,6 +34,12 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
     public function __construct(
         private readonly AzureOAuthService $azureOAuthService,
     ) {}
+
+    private function appendParam(string $url, string $key, string $value): string
+    {
+        $separator = str_contains($url, '?') ? '&' : '?';
+        return $url . $separator . rawurlencode($key) . '=' . rawurlencode($value);
+    }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
     {
@@ -64,7 +72,7 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
             $userInfo = $this->azureOAuthService->exchangeCodeForUserInfo($code, $loginType);
         } catch (\Throwable $e) {
             $this->logger->debug('Azure OAuth token exchange failed', ['exception' => $e->getMessage()]);
-            return $handler->handle($request);
+            return new RedirectResponse($this->appendParam($returnUrl, 'azure_login_error', 'exchange_failed'), 303);
         }
 
         $this->logger->debug('Azure OAuth user info received', ['email' => $userInfo['email'] ?? '']);
@@ -98,6 +106,18 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
 
         // Pass to the next middleware (which includes TYPO3's auth middleware)
         $response = $handler->handle($request);
+
+        // Check if frontend login actually succeeded
+        if ($loginType === 'frontend') {
+            $context = GeneralUtility::makeInstance(Context::class);
+            $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
+            if (!$isLoggedIn) {
+                $this->logger->debug('Azure OAuth: FE login failed after auth chain', ['email' => $userInfo['email'] ?? '']);
+                $returnUrl = $this->appendParam($returnUrl, 'azure_login_error', 'auth_failed');
+            } else {
+                $returnUrl = $this->appendParam($returnUrl, 'azure_login_success', '1');
+            }
+        }
 
         // Preserve Set-Cookie headers from the auth chain response.
         // TYPO3 defaults to SameSite=Strict for BE cookies, but after a cross-site
