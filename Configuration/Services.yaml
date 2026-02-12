@@ -8,6 +8,12 @@ services:
     resource: '../Classes/*'
     exclude: '../Classes/Domain/Model/*'
 
+  OliverKroener\OkAzureLogin\Service\AzureOAuthService:
+    public: true
+
+  OliverKroener\OkAzureLogin\Domain\Repository\AzureConfigurationRepository:
+    public: true
+
   OliverKroener\OkAzureLogin\LoginProvider\AzureLoginProvider:
     public: true
 
