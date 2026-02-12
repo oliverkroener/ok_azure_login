@@ -35,11 +35,23 @@
             <trans-unit id="label.context.backend.info" xml:space="preserve">
                 <source>Backend login configuration for this site. Each site with valid backend credentials will show a separate login button.</source>
             </trans-unit>
+            <trans-unit id="label.enabled" xml:space="preserve">
+                <source>Enabled</source>
+            </trans-unit>
+            <trans-unit id="label.enabled.description" xml:space="preserve">
+                <source>Enable or disable this backend login configuration. Disabled configurations will not show a login button.</source>
+            </trans-unit>
             <trans-unit id="label.backendLoginLabel" xml:space="preserve">
                 <source>Login Button Label</source>
             </trans-unit>
             <trans-unit id="label.backendLoginLabel.description" xml:space="preserve">
-                <source>Header shown above the login button on the backend login page (e.g. company name). If empty, the site identifier is used.</source>
+                <source>Required. Header shown above the login button on the backend login page (e.g. company name).</source>
+            </trans-unit>
+            <trans-unit id="label.showLabel" xml:space="preserve">
+                <source>Show Label on Login</source>
+            </trans-unit>
+            <trans-unit id="label.showLabel.description" xml:space="preserve">
+                <source>Show the login button label above the sign-in button on the backend login page.</source>
             </trans-unit>
             <trans-unit id="label.tenantId" xml:space="preserve">
                 <source>Tenant ID</source>
@@ -100,6 +112,27 @@
             </trans-unit>
             <trans-unit id="label.noBackendConfigs" xml:space="preserve">
                 <source>No backend login configurations found. Click "Add Backend Login Configuration" to create one.</source>
+            </trans-unit>
+            <trans-unit id="label.cloneFromBackend" xml:space="preserve">
+                <source>Clone from Backend Config</source>
+            </trans-unit>
+            <trans-unit id="label.cloneFromBackend.description" xml:space="preserve">
+                <source>Copy Tenant ID, Client ID, and Client Secret from an existing backend configuration</source>
+            </trans-unit>
+            <trans-unit id="label.cloneFromBackend.placeholder" xml:space="preserve">
+                <source>-- Select a backend configuration --</source>
+            </trans-unit>
+            <trans-unit id="confirm.clone.title" xml:space="preserve">
+                <source>Clone Backend Configuration</source>
+            </trans-unit>
+            <trans-unit id="confirm.clone.button" xml:space="preserve">
+                <source>Clone</source>
+            </trans-unit>
+            <trans-unit id="confirm.clone.redirectNote" xml:space="preserve">
+                <source>Please configure a separate Redirect URI for frontend use. Do not reuse the backend Redirect URI.</source>
+            </trans-unit>
+            <trans-unit id="label.clientSecret.cloned" xml:space="preserve">
+                <source>Client secret will be copied from the backend configuration on save.</source>
             </trans-unit>
             <trans-unit id="confirm.delete.title" xml:space="preserve">
                 <source>Delete Configuration</source>

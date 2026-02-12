@@ -102,6 +102,14 @@ class ConfigurationController
         $this->configureDocHeader($view);
         $this->loadFormDirtyCheckAssets($languageService);
 
+        $backendConfigs = $this->configurationRepository->findBackendConfigsPaginated(100, 0);
+
+        if ($backendConfigs !== []) {
+            GeneralUtility::makeInstance(PageRenderer::class)->loadJavaScriptModule(
+                '@oliverkroener/ok-azure-login/backend/clone-config.js'
+            );
+        }
+
         $view->assignMultiple([
             'config' => $config ?? [
                 'tenantId' => '',
@@ -119,6 +127,7 @@ class ConfigurationController
             'context' => 'frontend',
             'frontendUrl' => $frontendUrl,
             'backendUrl' => $backendUrl,
+            'backendConfigs' => $backendConfigs,
         ]);
 
         return $view->renderResponse('Backend/Configuration/Edit');
@@ -149,6 +158,11 @@ class ConfigurationController
                 'redirectUriBackend' => '',
                 'backendLoginLabel' => '',
             ]);
+
+            $cloneSecretFromUid = (int)($data['cloneSecretFromUid'] ?? 0);
+            if ($cloneSecretFromUid > 0 && ($data['clientSecret'] ?? '') === '') {
+                $this->configurationRepository->cloneEncryptedSecret($cloneSecretFromUid, $configPageId);
+            }
 
             $this->addFlashMessage('message.saved.title', 'message.saved.body', ContextualFeedbackSeverity::OK);
         }
@@ -298,6 +312,8 @@ class ConfigurationController
 
         $view->assignMultiple([
             'config' => $config ?? [
+                'enabled' => true,
+                'showLabel' => true,
                 'tenantId' => '',
                 'clientId' => '',
                 'clientSecret' => '',
@@ -326,6 +342,8 @@ class ConfigurationController
         $this->configurationRepository->saveBackendConfig(
             $configUid > 0 ? $configUid : null,
             [
+                'enabled' => (bool)($data['enabled'] ?? false),
+                'showLabel' => (bool)($data['showLabel'] ?? false),
                 'tenantId' => trim((string)($data['tenantId'] ?? '')),
                 'clientId' => trim((string)($data['clientId'] ?? '')),
                 'clientSecret' => (string)($data['clientSecret'] ?? ''),

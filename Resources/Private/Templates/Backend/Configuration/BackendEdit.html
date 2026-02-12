@@ -30,14 +30,38 @@
 
     <div class="form-section">
         <div class="row mb-3">
+            <label class="col-sm-3 col-form-label" for="enabled">
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.enabled" />
+            </label>
+            <div class="col-sm-9">
+                <input type="hidden" name="data[enabled]" value="0" />
+                <div class="form-check form-switch mt-2">
+                    <input type="checkbox" class="form-check-input" id="enabled" name="data[enabled]"
+                           value="1" {f:if(condition: '{config.enabled}', then: 'checked="checked"')} />
+                </div>
+                <div class="form-text">
+                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.enabled.description" />
+                </div>
+            </div>
+        </div>
+
+        <div class="row mb-3">
             <label class="col-sm-3 col-form-label" for="backendLoginLabel">
-                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.backendLoginLabel" />
+                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.backendLoginLabel" /> *
             </label>
             <div class="col-sm-9">
                 <input type="text" class="form-control" id="backendLoginLabel" name="data[backendLoginLabel]"
-                       value="{config.backendLoginLabel}" placeholder="Company Name" />
+                       value="{config.backendLoginLabel}" placeholder="Company Name" required="required" />
                 <div class="form-text">
                     <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.backendLoginLabel.description" />
+                </div>
+                <input type="hidden" name="data[showLabel]" value="0" />
+                <div class="form-check form-switch mt-2">
+                    <input type="checkbox" class="form-check-input" id="showLabel" name="data[showLabel]"
+                           value="1" {f:if(condition: '{config.showLabel}', then: 'checked="checked"')} />
+                    <label class="form-check-label" for="showLabel">
+                        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.showLabel" />
+                    </label>
                 </div>
             </div>
         </div>

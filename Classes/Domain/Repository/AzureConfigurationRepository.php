@@ -74,6 +74,7 @@ class AzureConfigurationRepository
         $rows = $qb->select('*')
             ->from(self::TABLE)
             ->where(
+                $qb->expr()->eq('enabled', $qb->createNamedParameter(1, Connection::PARAM_INT)),
                 $qb->expr()->neq('tenant_id', $qb->createNamedParameter('')),
                 $qb->expr()->neq('client_id', $qb->createNamedParameter('')),
                 $qb->expr()->neq('client_secret_encrypted', $qb->createNamedParameter('')),
@@ -128,6 +129,8 @@ class AzureConfigurationRepository
         foreach ($rows as $row) {
             $result[] = [
                 'uid' => (int)$row['uid'],
+                'enabled' => (bool)($row['enabled'] ?? true),
+                'showLabel' => (bool)($row['show_label'] ?? true),
                 'backendLoginLabel' => $row['backend_login_label'] ?? '',
                 'tenantId' => $row['tenant_id'] ?? '',
                 'clientId' => $row['client_id'] ?? '',
@@ -180,6 +183,8 @@ class AzureConfigurationRepository
     {
         $fields = [
             'site_root_page_id' => 0,
+            'enabled' => (int)($data['enabled'] ?? true),
+            'show_label' => (int)($data['showLabel'] ?? true),
             'backend_login_label' => $data['backendLoginLabel'] ?? '',
             'tenant_id' => $data['tenantId'] ?? '',
             'client_id' => $data['clientId'] ?? '',
@@ -206,6 +211,29 @@ class AzureConfigurationRepository
 
         $connection->update(self::TABLE, $fields, ['uid' => $uid]);
         return $uid;
+    }
+
+    /**
+     * Copy the encrypted client secret from one config to the record matching a site root page ID.
+     */
+    public function cloneEncryptedSecret(int $sourceUid, int $targetSiteRootPageId): void
+    {
+        $qb = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $qb->getRestrictions()->removeAll();
+        $encryptedSecret = $qb->select('client_secret_encrypted')
+            ->from(self::TABLE)
+            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($sourceUid, Connection::PARAM_INT)))
+            ->executeQuery()
+            ->fetchOne();
+
+        if ($encryptedSecret !== false && $encryptedSecret !== '') {
+            $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+            $connection->update(
+                self::TABLE,
+                ['client_secret_encrypted' => $encryptedSecret],
+                ['site_root_page_id' => $targetSiteRootPageId]
+            );
+        }
     }
 
     /**
@@ -241,6 +269,8 @@ class AzureConfigurationRepository
         }
 
         return [
+            'enabled' => (bool)($row['enabled'] ?? true),
+            'showLabel' => (bool)($row['show_label'] ?? true),
             'tenantId' => $row['tenant_id'] ?? '',
             'clientId' => $row['client_id'] ?? '',
             'clientSecret' => $clientSecret,
