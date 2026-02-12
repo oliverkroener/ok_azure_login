@@ -135,6 +135,22 @@
                 <source>No backend login configurations found. Click "Add Backend Login Configuration" to create one.</source>
                 <target>Keine Backend-Anmeldekonfigurationen gefunden. Klicken Sie auf &#x201e;Backend-Anmeldekonfiguration hinzuf&#xfc;gen&#x201c;, um eine zu erstellen.</target>
             </trans-unit>
+            <trans-unit id="label.cloneFromOther" xml:space="preserve">
+                <source>Clone from other Config</source>
+                <target>Von anderer Konfiguration klonen</target>
+            </trans-unit>
+            <trans-unit id="label.cloneFromOther.description" xml:space="preserve">
+                <source>Copy Tenant ID, Client ID, and Client Secret from another backend configuration</source>
+                <target>Mandanten-ID, Client-ID und Client-Geheimnis von einer anderen Backend-Konfiguration kopieren</target>
+            </trans-unit>
+            <trans-unit id="label.cloneFromOther.placeholder" xml:space="preserve">
+                <source>-- Select another configuration --</source>
+                <target>-- Andere Konfiguration w&#xe4;hlen --</target>
+            </trans-unit>
+            <trans-unit id="confirm.clone.redirectNoteBackend" xml:space="preserve">
+                <source>Please configure the correct Redirect URI for this backend configuration.</source>
+                <target>Bitte konfigurieren Sie die korrekte Weiterleitungs-URI f&#xfc;r diese Backend-Konfiguration.</target>
+            </trans-unit>
             <trans-unit id="confirm.delete.title" xml:space="preserve">
                 <source>Delete Configuration</source>
                 <target>Konfiguration l&#xf6;schen</target>

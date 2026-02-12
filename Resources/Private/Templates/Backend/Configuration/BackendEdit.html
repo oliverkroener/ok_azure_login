@@ -28,6 +28,46 @@
 
 <form action="{saveUrl}" method="post" id="azureConfigForm" name="azureConfigForm">
 
+    <f:if condition="{otherConfigs}">
+        <input type="hidden" id="cloneSecretFromUid" name="data[cloneSecretFromUid]" value="0" />
+        <div class="form-section mb-4">
+            <div class="row mb-3">
+                <label class="col-sm-3 col-form-label" for="cloneSource">
+                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.cloneFromOther" />
+                </label>
+                <div class="col-sm-9">
+                    <select class="form-control" id="cloneSource"
+                            data-clone-confirm-title="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.clone.title')}"
+                            data-clone-confirm-button="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.clone.button')}"
+                            data-clone-cancel-button="{f:translate(key: 'LLL:EXT:core/Resources/Private/Language/locallang_core.xlf:labels.cancel')}"
+                            data-clone-label-tenant="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.tenantId')}"
+                            data-clone-label-client="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientId')}"
+                            data-clone-label-secret="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret')}"
+                            data-clone-label-redirect="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.redirectUriBackend')}"
+                            data-clone-redirect-note="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.clone.redirectNoteBackend')}"
+                            data-clone-secret-cloned="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret.cloned')}">
+                        <option value=""><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.cloneFromOther.placeholder" /></option>
+                        <f:for each="{otherConfigs}" as="cfg">
+                            <option value="{cfg.uid}"
+                                    data-tenant-id="{cfg.tenantId}"
+                                    data-client-id="{cfg.clientId}"
+                                    data-has-secret="{f:if(condition: '{cfg.hasSecret}', then: '1', else: '0')}"
+                                    data-redirect-uri="{cfg.redirectUriBackend}">
+                                <f:if condition="{cfg.backendLoginLabel}">
+                                    <f:then>{cfg.backendLoginLabel} ({cfg.tenantId})</f:then>
+                                    <f:else>{cfg.tenantId}</f:else>
+                                </f:if>
+                            </option>
+                        </f:for>
+                    </select>
+                    <div class="form-text">
+                        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.cloneFromOther.description" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </f:if>
+
     <div class="form-section">
         <div class="row mb-3">
             <label class="col-sm-3 col-form-label" for="enabled">

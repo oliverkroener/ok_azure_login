@@ -1,5 +1,5 @@
 /**
- * Clone backend config values into the frontend edit form.
+ * Clone values from another backend config into the current backend edit form.
  * Copies Tenant ID, Client ID, and Client Secret.
  * Shows a TYPO3 Modal confirmation with details.
  * Redirect URI is editable — Clone button stays disabled until it is changed.
@@ -28,9 +28,9 @@ if (select) {
         const lblTenant = select.dataset.cloneLabelTenant || 'Tenant ID';
         const lblClient = select.dataset.cloneLabelClient || 'Client ID';
         const lblSecret = select.dataset.cloneLabelSecret || 'Client Secret';
-        const lblRedirect = select.dataset.cloneLabelRedirect || 'Redirect URI (Frontend)';
-        const redirectNote = select.dataset.cloneRedirectNote || 'Please configure a separate Redirect URI for frontend use.';
-        const secretClonedText = select.dataset.cloneSecretCloned || 'Client secret will be copied from backend configuration on save.';
+        const lblRedirect = select.dataset.cloneLabelRedirect || 'Redirect URI (Backend)';
+        const redirectNote = select.dataset.cloneRedirectNote || 'Please configure the correct Redirect URI for this backend configuration.';
+        const secretClonedText = select.dataset.cloneSecretCloned || 'Client secret will be copied from the selected configuration on save.';
 
         let html = '<table class="table table-sm table-bordered mb-3">';
         html += '<tr><th>' + escapeHtml(lblTenant) + '</th><td><code>' + escapeHtml(tenantId) + '</code></td></tr>';
@@ -41,7 +41,7 @@ if (select) {
             : '<span class="text-muted">&mdash;</span>') + '</td></tr>';
         html += '<tr><th>' + escapeHtml(lblRedirect) + '</th><td>'
             + '<input type="url" class="form-control form-control-sm" id="cloneRedirectUriInput" '
-            + 'value="' + escapeAttr(redirectUri) + '" placeholder="https://example.com/azure-login/callback" />'
+            + 'value="' + escapeAttr(redirectUri) + '" placeholder="https://example.com/typo3/azure-login/callback" />'
             + '<div class="form-text text-warning mb-0">' + escapeHtml(redirectNote) + '</div>'
             + '</td></tr>';
         html += '</table>';
@@ -91,7 +91,7 @@ if (select) {
 
                 const tenantInput = document.getElementById('tenantId');
                 const clientInput = document.getElementById('clientId');
-                const redirectFrontendInput = document.getElementById('redirectUriFrontend');
+                const redirectBackendInput = document.getElementById('redirectUriBackend');
                 const cloneSecretInput = document.getElementById('cloneSecretFromUid');
                 const secretHelp = document.getElementById('clientSecret')
                     ?.closest('.row')
@@ -105,9 +105,9 @@ if (select) {
                     clientInput.value = clientId;
                     clientInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
-                if (redirectFrontendInput && newRedirectUri) {
-                    redirectFrontendInput.value = newRedirectUri;
-                    redirectFrontendInput.dispatchEvent(new Event('input', { bubbles: true }));
+                if (redirectBackendInput && newRedirectUri) {
+                    redirectBackendInput.value = newRedirectUri;
+                    redirectBackendInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 const secretCheckbox = modal.querySelector('#cloneSecretCheckbox');
                 if (cloneSecretInput && hasSecret && secretCheckbox && secretCheckbox.checked) {

@@ -122,6 +122,18 @@
             <trans-unit id="label.cloneFromBackend.placeholder" xml:space="preserve">
                 <source>-- Select a backend configuration --</source>
             </trans-unit>
+            <trans-unit id="label.cloneFromOther" xml:space="preserve">
+                <source>Clone from other Config</source>
+            </trans-unit>
+            <trans-unit id="label.cloneFromOther.description" xml:space="preserve">
+                <source>Copy Tenant ID, Client ID, and Client Secret from another backend configuration</source>
+            </trans-unit>
+            <trans-unit id="label.cloneFromOther.placeholder" xml:space="preserve">
+                <source>-- Select another configuration --</source>
+            </trans-unit>
+            <trans-unit id="confirm.clone.redirectNoteBackend" xml:space="preserve">
+                <source>Please configure the correct Redirect URI for this backend configuration.</source>
+            </trans-unit>
             <trans-unit id="confirm.clone.title" xml:space="preserve">
                 <source>Clone Backend Configuration</source>
             </trans-unit>

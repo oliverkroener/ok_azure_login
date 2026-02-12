@@ -309,6 +309,18 @@ class ConfigurationController
         $this->configureDocHeader($view);
         $this->loadFormDirtyCheckAssets($languageService);
 
+        // Load other backend configs for the clone dropdown (exclude the current one)
+        $otherConfigs = array_filter(
+            $this->configurationRepository->findBackendConfigsPaginated(100, 0),
+            static fn(array $c) => $c['uid'] !== $configUid
+        );
+
+        if ($otherConfigs !== []) {
+            GeneralUtility::makeInstance(PageRenderer::class)->loadJavaScriptModule(
+                '@oliverkroener/ok-azure-login/backend/clone-backend-config.js'
+            );
+        }
+
         $view->assignMultiple([
             'config' => $config ?? [
                 'enabled' => true,
@@ -326,6 +338,7 @@ class ConfigurationController
             'saveUrl' => $saveUrl,
             'listUrl' => $listUrl,
             'id' => $id,
+            'otherConfigs' => array_values($otherConfigs),
         ]);
 
         return $view->renderResponse('Backend/Configuration/BackendEdit');
@@ -338,7 +351,7 @@ class ConfigurationController
         $configUid = (int)($request->getQueryParams()['configUid'] ?? $parsedBody['configUid'] ?? 0);
         $data = $parsedBody['data'] ?? [];
 
-        $this->configurationRepository->saveBackendConfig(
+        $savedUid = $this->configurationRepository->saveBackendConfig(
             $configUid > 0 ? $configUid : null,
             [
                 'enabled' => (bool)($data['enabled'] ?? false),
@@ -350,6 +363,11 @@ class ConfigurationController
                 'backendLoginLabel' => trim((string)($data['backendLoginLabel'] ?? '')),
             ]
         );
+
+        $cloneSecretFromUid = (int)($data['cloneSecretFromUid'] ?? 0);
+        if ($cloneSecretFromUid > 0 && ($data['clientSecret'] ?? '') === '') {
+            $this->configurationRepository->cloneEncryptedSecretByUid($cloneSecretFromUid, $savedUid);
+        }
 
         $this->addFlashMessage('message.saved.title', 'message.saved.body', ContextualFeedbackSeverity::OK);
 

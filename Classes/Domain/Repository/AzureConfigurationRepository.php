@@ -218,15 +218,8 @@ class AzureConfigurationRepository
      */
     public function cloneEncryptedSecret(int $sourceUid, int $targetSiteRootPageId): void
     {
-        $qb = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
-        $qb->getRestrictions()->removeAll();
-        $encryptedSecret = $qb->select('client_secret_encrypted')
-            ->from(self::TABLE)
-            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($sourceUid, Connection::PARAM_INT)))
-            ->executeQuery()
-            ->fetchOne();
-
-        if ($encryptedSecret !== false && $encryptedSecret !== '') {
+        $encryptedSecret = $this->getEncryptedSecret($sourceUid);
+        if ($encryptedSecret !== null) {
             $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
             $connection->update(
                 self::TABLE,
@@ -234,6 +227,38 @@ class AzureConfigurationRepository
                 ['site_root_page_id' => $targetSiteRootPageId]
             );
         }
+    }
+
+    /**
+     * Copy the encrypted client secret from one config to another by uid.
+     */
+    public function cloneEncryptedSecretByUid(int $sourceUid, int $targetUid): void
+    {
+        $encryptedSecret = $this->getEncryptedSecret($sourceUid);
+        if ($encryptedSecret !== null) {
+            $connection = $this->connectionPool->getConnectionForTable(self::TABLE);
+            $connection->update(
+                self::TABLE,
+                ['client_secret_encrypted' => $encryptedSecret],
+                ['uid' => $targetUid]
+            );
+        }
+    }
+
+    private function getEncryptedSecret(int $uid): ?string
+    {
+        $qb = $this->connectionPool->getQueryBuilderForTable(self::TABLE);
+        $qb->getRestrictions()->removeAll();
+        $encryptedSecret = $qb->select('client_secret_encrypted')
+            ->from(self::TABLE)
+            ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, Connection::PARAM_INT)))
+            ->executeQuery()
+            ->fetchOne();
+
+        if ($encryptedSecret !== false && $encryptedSecret !== '') {
+            return $encryptedSecret;
+        }
+        return null;
     }
 
     /**
