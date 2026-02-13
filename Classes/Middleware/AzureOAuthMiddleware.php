@@ -14,6 +14,9 @@ use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Context\UserAspect;
+use TYPO3\CMS\Core\Crypto\Random;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -40,17 +43,43 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
      */
     private $azureOAuthService;
 
+    /**
+     * @var ConnectionPool
+     */
+    private $connectionPool;
+
     public function __construct(
-        ?AzureOAuthService $azureOAuthService = null
+        ?AzureOAuthService $azureOAuthService = null,
+        ?ConnectionPool $connectionPool = null
     ) {
         $this->azureOAuthService = $azureOAuthService
             ?? GeneralUtility::makeInstance(AzureOAuthService::class);
+        $this->connectionPool = $connectionPool
+            ?? GeneralUtility::makeInstance(ConnectionPool::class);
     }
 
     private function appendParam(string $url, string $key, string $value): string
     {
         $separator = strpos($url, '?') !== false ? '&' : '?';
         return $url . $separator . rawurlencode($key) . '=' . rawurlencode($value);
+    }
+
+    /**
+     * Remove azure_login_error / azure_login_success query params from a URL
+     * so they don't accumulate across retry attempts.
+     */
+    private function stripLoginParams(string $url): string
+    {
+        $parts = parse_url($url);
+        if (!isset($parts['query'])) {
+            return $url;
+        }
+        parse_str($parts['query'], $params);
+        unset($params['azure_login_error'], $params['azure_login_success']);
+        $query = http_build_query($params);
+        $base = ($parts['scheme'] ?? '') !== '' ? $parts['scheme'] . '://' . ($parts['host'] ?? '') : '';
+        $base .= $parts['path'] ?? '/';
+        return $query !== '' ? $base . '?' . $query : $base;
     }
 
     public function process(ServerRequestInterface $request, RequestHandlerInterface $handler): ResponseInterface
@@ -92,7 +121,7 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
         }
 
         $loginType = $state['type'] ?? 'frontend';
-        $returnUrl = $state['returnUrl'] ?? '/';
+        $returnUrl = $this->stripLoginParams($state['returnUrl'] ?? '/');
         $this->logger->debug('Azure OAuth state valid', ['loginType' => $loginType, 'returnUrl' => $returnUrl]);
 
         // Exchange authorization code for user info
@@ -195,7 +224,8 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
         $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
         if (!$isLoggedIn) {
             $this->logger->debug('Azure OAuth: FE login failed', ['email' => $userInfo['email'] ?? '']);
-            $returnUrl = $this->appendParam($returnUrl, 'azure_login_error', 'auth_failed');
+            $errorCode = $this->handleFailedFrontendLogin($userInfo);
+            $returnUrl = $this->appendParam($returnUrl, 'azure_login_error', $errorCode);
         } else {
             $this->logger->debug('Azure OAuth: FE login succeeded', [
                 'uid' => $frontendUser->user['uid'] ?? null,
@@ -219,5 +249,72 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
             'returnUrl' => $returnUrl,
         ]);
         return $redirect;
+    }
+
+    /**
+     * Handle a failed frontend login: auto-create a disabled fe_user if configured.
+     *
+     * @return string Error code for the redirect URL
+     */
+    private function handleFailedFrontendLogin(array $userInfo): string
+    {
+        $config = $this->azureOAuthService->getConfiguration('frontend');
+        if (empty($config['autoCreateFeUser'])) {
+            return 'auth_failed';
+        }
+
+        $email = $userInfo['email'] ?? '';
+        if ($email === '') {
+            return 'auth_failed';
+        }
+
+        // Check if a user with this email already exists (including disabled)
+        $qb = $this->connectionPool->getQueryBuilderForTable('fe_users');
+        $qb->getRestrictions()->removeAll();
+        $existingUser = $qb->select('uid', 'disable')
+            ->from('fe_users')
+            ->where(
+                $qb->expr()->eq('email', $qb->createNamedParameter($email)),
+                $qb->expr()->eq('deleted', $qb->createNamedParameter(0, Connection::PARAM_INT))
+            )
+            ->execute()
+            ->fetch(\PDO::FETCH_ASSOC);
+
+        if ($existingUser !== false) {
+            // User exists but is disabled (or login failed for another reason)
+            $this->logger->debug('Azure OAuth: fe_user exists but login failed', [
+                'email' => $email,
+                'disable' => $existingUser['disable'] ?? 0,
+            ]);
+            return 'account_pending';
+        }
+
+        // Create a new disabled fe_user
+        $storagePid = (int)($config['feUserStoragePid'] ?? 0);
+        $defaultGroups = $config['defaultFeGroups'] ?? '';
+        $now = time();
+
+        $connection = $this->connectionPool->getConnectionForTable('fe_users');
+        $connection->insert('fe_users', [
+            'pid' => $storagePid,
+            'username' => $email,
+            'email' => $email,
+            'name' => $userInfo['displayName'] ?? '',
+            'first_name' => $userInfo['givenName'] ?? '',
+            'last_name' => $userInfo['surname'] ?? '',
+            'password' => GeneralUtility::makeInstance(Random::class)->generateRandomHexString(64),
+            'usergroup' => $defaultGroups,
+            'disable' => 1,
+            'tstamp' => $now,
+            'crdate' => $now,
+        ]);
+
+        $this->logger->debug('Azure OAuth: created disabled fe_user', [
+            'email' => $email,
+            'pid' => $storagePid,
+            'usergroup' => $defaultGroups,
+        ]);
+
+        return 'account_pending';
     }
 }

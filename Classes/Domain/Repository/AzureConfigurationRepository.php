@@ -171,6 +171,9 @@ class AzureConfigurationRepository
             'client_id' => $data['clientId'] ?? '',
             'redirect_uri_frontend' => $data['redirectUriFrontend'] ?? '',
             'redirect_uri_backend' => $data['redirectUriBackend'] ?? '',
+            'auto_create_fe_user' => (int)($data['autoCreateFeUser'] ?? false),
+            'default_fe_groups' => $data['defaultFeGroups'] ?? '',
+            'fe_user_storage_pid' => (int)($data['feUserStoragePid'] ?? 0),
             'tstamp' => time(),
         ];
 
@@ -318,6 +321,9 @@ class AzureConfigurationRepository
             'redirectUriFrontend' => $row['redirect_uri_frontend'] ?? '',
             'redirectUriBackend' => $row['redirect_uri_backend'] ?? '',
             'backendLoginLabel' => $row['backend_login_label'] ?? '',
+            'autoCreateFeUser' => (bool)($row['auto_create_fe_user'] ?? false),
+            'defaultFeGroups' => $row['default_fe_groups'] ?? '',
+            'feUserStoragePid' => (int)($row['fe_user_storage_pid'] ?? 0),
         ];
     }
 }

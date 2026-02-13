@@ -59,6 +59,10 @@
         <source>Azure Login is not configured. Please contact the administrator.</source>
         <target>Azure Login ist nicht konfiguriert. Bitte kontaktieren Sie den Administrator.</target>
       </trans-unit>
+      <trans-unit id="tx_okazurelogin.error.account_pending" xml:space="preserve">
+        <source>Your account has been created but is not yet activated. An administrator must enable your account before you can sign in.</source>
+        <target>Ihr Konto wurde erstellt, ist aber noch nicht aktiviert. Ein Administrator muss Ihr Konto freischalten, bevor Sie sich anmelden k&#xf6;nnen.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

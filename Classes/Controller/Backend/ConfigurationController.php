@@ -12,6 +12,7 @@ use TYPO3\CMS\Backend\Template\Components\ButtonBar;
 use TYPO3\CMS\Backend\Template\ModuleTemplate;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Http\HtmlResponse;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Imaging\Icon;
@@ -29,22 +30,44 @@ class ConfigurationController
 {
     private const BACKEND_ITEMS_PER_PAGE = 20;
 
-    private AzureConfigurationRepository $configurationRepository;
-    private SiteFinder $siteFinder;
-    private UriBuilder $uriBuilder;
-    private IconFactory $iconFactory;
+    /**
+     * @var AzureConfigurationRepository
+     */
+    private $configurationRepository;
+
+    /**
+     * @var SiteFinder
+     */
+    private $siteFinder;
+
+    /**
+     * @var UriBuilder
+     */
+    private $uriBuilder;
+
+    /**
+     * @var IconFactory
+     */
+    private $iconFactory;
+
+    /**
+     * @var ConnectionPool
+     */
+    private $connectionPool;
 
     public function __construct(
         ?AzureConfigurationRepository $configurationRepository = null,
         ?SiteFinder $siteFinder = null,
         ?UriBuilder $uriBuilder = null,
-        ?IconFactory $iconFactory = null
+        ?IconFactory $iconFactory = null,
+        ?ConnectionPool $connectionPool = null
     ) {
         $this->configurationRepository = $configurationRepository
             ?? GeneralUtility::makeInstance(AzureConfigurationRepository::class);
         $this->siteFinder = $siteFinder ?? GeneralUtility::makeInstance(SiteFinder::class);
         $this->uriBuilder = $uriBuilder ?? GeneralUtility::makeInstance(UriBuilder::class);
         $this->iconFactory = $iconFactory ?? GeneralUtility::makeInstance(IconFactory::class);
+        $this->connectionPool = $connectionPool ?? GeneralUtility::makeInstance(ConnectionPool::class);
     }
 
     /**
@@ -124,6 +147,27 @@ class ConfigurationController
             );
         }
 
+        $feGroups = $this->fetchFeGroups();
+        $selectedFeGroupUids = array_filter(
+            array_map('intval', explode(',', $config['defaultFeGroups'] ?? ''))
+        );
+
+        // Page browser for feUserStoragePid
+        $elementBrowserUrl = (string)$this->uriBuilder->buildUriFromRoute('wizard_element_browser', [
+            'mode' => 'db',
+            'bparams' => 'feUserStoragePid|||pages|',
+        ]);
+        $currentPid = (int)($config['feUserStoragePid'] ?? 0);
+        $feUserStoragePidTitle = '';
+        if ($currentPid > 0) {
+            $pageRow = BackendUtility::getRecord('pages', $currentPid, 'title');
+            $feUserStoragePidTitle = $pageRow ? '[' . $currentPid . '] ' . $pageRow['title'] : '[' . $currentPid . ']';
+        }
+
+        GeneralUtility::makeInstance(PageRenderer::class)->loadRequireJsModule(
+            'TYPO3/CMS/OkAzureLogin/Backend/PageBrowser'
+        );
+
         $view = $this->createView('Backend/Configuration/Edit');
         $view->assignMultiple([
             'config' => $config ?? [
@@ -133,6 +177,9 @@ class ConfigurationController
                 'redirectUriFrontend' => '',
                 'redirectUriBackend' => '',
                 'backendLoginLabel' => '',
+                'autoCreateFeUser' => false,
+                'defaultFeGroups' => '',
+                'feUserStoragePid' => 0,
             ],
             'siteRootPageId' => $siteRootPageId,
             'siteIdentifier' => $site->getIdentifier(),
@@ -143,6 +190,10 @@ class ConfigurationController
             'frontendUrl' => $frontendUrl,
             'backendUrl' => $backendUrl,
             'backendConfigs' => $backendConfigs,
+            'feGroups' => $feGroups,
+            'selectedFeGroupUids' => $selectedFeGroupUids,
+            'elementBrowserUrl' => $elementBrowserUrl,
+            'feUserStoragePidTitle' => $feUserStoragePidTitle,
         ]);
 
         $moduleTemplate->setContent($view->render());
@@ -166,6 +217,11 @@ class ConfigurationController
         }
 
         if ($configPageId > 0) {
+            $defaultFeGroups = $data['defaultFeGroups'] ?? [];
+            if (is_array($defaultFeGroups)) {
+                $defaultFeGroups = implode(',', array_filter($defaultFeGroups));
+            }
+
             $this->configurationRepository->save($configPageId, [
                 'tenantId' => trim((string)($data['tenantId'] ?? '')),
                 'clientId' => trim((string)($data['clientId'] ?? '')),
@@ -173,6 +229,9 @@ class ConfigurationController
                 'redirectUriFrontend' => trim((string)($data['redirectUriFrontend'] ?? '')),
                 'redirectUriBackend' => '',
                 'backendLoginLabel' => '',
+                'autoCreateFeUser' => (bool)($data['autoCreateFeUser'] ?? false),
+                'defaultFeGroups' => (string)$defaultFeGroups,
+                'feUserStoragePid' => (int)($data['feUserStoragePid'] ?? 0),
             ]);
 
             $cloneSecretFromUid = (int)($data['cloneSecretFromUid'] ?? 0);
@@ -330,6 +389,18 @@ class ConfigurationController
             );
         }
 
+        // Load copy-to-clipboard JS module
+        GeneralUtility::makeInstance(PageRenderer::class)->loadRequireJsModule(
+            'TYPO3/CMS/OkAzureLogin/Backend/CopyCallbackUrl'
+        );
+
+        // Build backend callback URL from route config
+        $backendCallbackUrl = (string)$this->uriBuilder->buildUriFromRoute(
+            'azure_login_callback',
+            [],
+            UriBuilder::ABSOLUTE_URL
+        );
+
         $view = $this->createView('Backend/Configuration/BackendEdit');
         $view->assignMultiple([
             'config' => $config ?? [
@@ -349,6 +420,7 @@ class ConfigurationController
             'listUrl' => $listUrl,
             'id' => $id,
             'otherConfigs' => array_values($otherConfigs),
+            'backendCallbackUrl' => $backendCallbackUrl,
         ]);
 
         $moduleTemplate->setContent($view->render());
@@ -404,6 +476,25 @@ class ConfigurationController
     }
 
     // -- Helpers --------------------------------------------------------------
+
+    private function fetchFeGroups(): array
+    {
+        $qb = $this->connectionPool->getQueryBuilderForTable('fe_groups');
+        $rows = $qb->select('uid', 'title')
+            ->from('fe_groups')
+            ->orderBy('title', 'ASC')
+            ->execute()
+            ->fetchAll(\PDO::FETCH_ASSOC);
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[] = [
+                'uid' => (int)$row['uid'],
+                'title' => $row['title'],
+            ];
+        }
+        return $result;
+    }
 
     private function resolveContext(string $context): string
     {
