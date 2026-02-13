@@ -23,8 +23,8 @@ Azure Login
     Oliver Kroener <https://www.oliver-kroener.de> & Contributors
 
 :License:
-   This document is published under the
-   `Open Publication License <https://www.opencontent.org/openpub/>`__.
+    This document is published under the
+    `Open Publication License <https://www.opencontent.org/openpub/>`__.
 
 :Rendered:
     |today|
@@ -39,11 +39,6 @@ Azure Login
     Configuration/Index
     Faq
     GetHelp
-    Sitemap
-
-..  toctree::
-    :hidden:
-
     Sitemap
 
 ..  note::
@@ -80,6 +75,6 @@ Azure Login
 
         Common questions about setup and usage.
 
-    ..  card:: :ref:`How to get help <help>`
+    ..  card:: :ref:`Get Help <help>`
 
         Where to get help and how to report issues.

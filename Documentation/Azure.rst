@@ -11,10 +11,13 @@ so the extension can authenticate users via the OAuth 2.0 authorization code
 flow.
 
 ..  attention::
-    The **Client ID** can be found on the overview page in Azure and **should not be confused with the Client Secret ID**. For the secret configuration, only the Secret **Value** itself is required, not the Secret ID.
+    The **Client ID** can be found on the overview page in Azure and **must not
+    be confused with the Client Secret ID**. For the secret configuration, only
+    the Secret **Value** itself is required, not the Secret ID.
 
 ..  note::
-    This guide assumes you have **administrative access to Microsoft Entra ID** and the necessary permissions to register applications.
+    This guide assumes you have **administrative access to Microsoft Entra ID**
+    and the necessary permissions to register applications.
 
 ..  rst-class:: bignums-xxl
 
@@ -25,7 +28,7 @@ flow.
 
 2.  Configure the application
 
-    - **Name**: Choose a descriptive name (e.g. "TYPO3 Azure Login").
+    - **Name**: Choose a descriptive name (e.g., "TYPO3 Azure Login").
     - **Supported account types**: Select "Accounts in this organizational directory only (Single tenant)".
 
 3.  Add redirect URIs
@@ -78,9 +81,9 @@ flow.
 
     The extension uses the **authorization code flow** with **delegated permissions** (not application permissions). It requests the following scopes:
 
-    - ``openid`` -- sign-in
-    - ``profile`` -- basic user profile
-    - ``User.Read`` -- read the signed-in user's profile (email, display name)
+    - ``openid`` -- Sign-in
+    - ``profile`` -- Basic user profile
+    - ``User.Read`` -- Read the signed-in user's profile (email, display name)
 
     To configure:
 

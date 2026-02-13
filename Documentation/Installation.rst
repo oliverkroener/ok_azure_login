@@ -12,7 +12,7 @@ Install with Composer
 =====================
 
 ..  note::
-    This is the recommended way to install this extension.
+    Composer is the recommended way to install this extension.
 
 Install the extension via Composer:
 
@@ -26,7 +26,8 @@ After installation, update the database schema to create the configuration table
 
     vendor/bin/typo3 database:updateschema
 
-See also `Installing extensions, TYPO3 Getting started <https://docs.typo3.org/permalink/t3start:installing-extensions>`_.
+See also `Installing extensions <https://docs.typo3.org/permalink/t3start:installing-extensions>`__
+in the TYPO3 Getting Started guide.
 
 ..  _installation-typoscript:
 
@@ -61,7 +62,7 @@ To add them:
 #. Go to the :guilabel:`Page` module and select the page where the login or logout button should appear
 #. Click :guilabel:`Create new content element`
 #. Select from the **Azure Login** group: either **Azure Login** or **Azure Logout**
-#. Configure the element settings (button theme, redirect URL, etc.)
+#. Configure the element settings (button theme, redirect URL, etc.) as needed
 #. Save and clear caches
 
 ..  _installation-backend-login:

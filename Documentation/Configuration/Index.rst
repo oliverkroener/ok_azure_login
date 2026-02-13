@@ -155,7 +155,7 @@ The following settings are available:
 
     The OAuth callback URL for **frontend** login.
 
-    Example: ``https://your-domain.com/azure-login/callback``
+    Example: ``https://your-domain.com/your-login-page``
 
 .. confval:: redirectUriBackend
 
@@ -254,5 +254,6 @@ Security notes
 - **Per-site isolation**: Each TYPO3 site can have its own Azure credentials,
   preventing credential leakage across multi-site installations.
 - Never commit client secrets to version control.
-- Use separate Azure app registrations for development, staging, and production.
+- Use separate Azure app registrations for development, staging, and production
+  environments.
 - Rotate client secrets regularly before their expiration date.

@@ -7,11 +7,12 @@ Where to get help
 =================
 
 ..  note::
-    You can get help in the TYPO3 Slack https://typo3.org/community/meet/chat-slack,
-    ask a question in the official TYPO3 forum, https://talk.typo3.org/c/typo3-questions/19
+    You can get help in the `TYPO3 Slack <https://typo3.org/community/meet/chat-slack>`__,
+    ask a question in the `official TYPO3 forum <https://talk.typo3.org/c/typo3-questions/19>`__,
     or contact the extension author.
 
-    Please visit the following website for contacting the author directly: https://www.oliver-kroener.de
+    Visit `oliver-kroener.de <https://www.oliver-kroener.de>`__ to contact
+    the author directly.
 
 ..  _report-issues:
 
