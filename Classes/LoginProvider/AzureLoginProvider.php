@@ -56,7 +56,7 @@ class AzureLoginProvider implements LoginProviderInterface
             $this->azureOAuthService->setSiteRootPageId((int)($config['siteRootPageId'] ?? 0));
 
             $logins[] = [
-                'label' => $config['backendLoginLabel'] ?? '',
+                'label' => ($config['showLabel'] ?? true) ? ($config['backendLoginLabel'] ?? '') : '',
                 'authorizeUrl' => $this->azureOAuthService->buildAuthorizeUrl('backend', '/typo3'),
             ];
         }

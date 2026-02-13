@@ -71,6 +71,17 @@ $iconRegistry->registerIcon(
     ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/MicrosoftLogo.svg']
 );
 
+// Exclude Azure OAuth query parameters from cHash calculation
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'code';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'state';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_success';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_error';
+
+// Register page TSconfig for new content element wizard (TYPO3 11 compat)
+ExtensionManagementUtility::addPageTSConfig(
+    '@import "EXT:ok_azure_login/Configuration/page.tsconfig"'
+);
+
 // Backend login provider – replaces default UsernamePasswordLoginProvider
 // since our template already includes both the Azure button and username/password fields.
 unset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1433416747]);

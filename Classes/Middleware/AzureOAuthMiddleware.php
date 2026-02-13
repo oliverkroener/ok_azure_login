@@ -107,6 +107,10 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
             $body['userident'] = 'azure-oauth';
             $body['username'] = $userInfo['email'];
             $request = $request->withParsedBody($body);
+            // TYPO3 v11 reads login data from $_POST superglobals, not PSR-7 body
+            $_POST['login_status'] = 'login';
+            $_POST['userident'] = 'azure-oauth';
+            $_POST['username'] = $userInfo['email'];
             $this->logger->debug('Injected BE login fields', ['username' => $userInfo['email']]);
         } else {
             // Frontend: inject logintype=login to trigger FE auth chain
@@ -115,6 +119,10 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
             $body['user'] = $userInfo['email'];
             $body['pass'] = 'azure-oauth';
             $request = $request->withParsedBody($body);
+            // TYPO3 v11 reads login data from $_POST superglobals, not PSR-7 body
+            $_POST['logintype'] = 'login';
+            $_POST['user'] = $userInfo['email'];
+            $_POST['pass'] = 'azure-oauth';
             $this->logger->debug('Injected FE login fields', ['user' => $userInfo['email']]);
         }
 

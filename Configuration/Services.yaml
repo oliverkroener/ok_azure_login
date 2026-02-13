@@ -16,9 +16,3 @@ services:
 
   OliverKroener\OkAzureLogin\LoginProvider\AzureLoginProvider:
     public: true
-
-  OliverKroener\OkAzureLogin\EventListener\AzureRequestTokenListener:
-    tags:
-      - name: event.listener
-        identifier: 'ok-azure-login/request-token'
-        event: TYPO3\CMS\Core\Authentication\Event\BeforeRequestTokenProcessedEvent

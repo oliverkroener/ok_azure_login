@@ -12,9 +12,7 @@ ExtensionUtility::registerPlugin(
     'OkAzureLogin',
     'Login',
     'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.name',
-    'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg',
-    'default',
-    'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.description'
+    'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg'
 );
 
 $cType = 'okazurelogin_login';
@@ -40,9 +38,7 @@ ExtensionUtility::registerPlugin(
     'OkAzureLogin',
     'Logout',
     'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.name',
-    'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg',
-    'default',
-    'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.description'
+    'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg'
 );
 
 $logoutCType = 'okazurelogin_logout';
