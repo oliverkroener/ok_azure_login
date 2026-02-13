@@ -26,7 +26,7 @@ class AzureLoginProvider implements LoginProviderInterface
 
     public function __construct(
         ?AzureOAuthService $azureOAuthService = null,
-        ?AzureConfigurationRepository $configurationRepository = null,
+        ?AzureConfigurationRepository $configurationRepository = null
     ) {
         $container = GeneralUtility::getContainer();
         $this->azureOAuthService = $azureOAuthService

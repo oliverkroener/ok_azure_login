@@ -38,7 +38,7 @@ class ConfigurationController
         ?AzureConfigurationRepository $configurationRepository = null,
         ?SiteFinder $siteFinder = null,
         ?UriBuilder $uriBuilder = null,
-        ?IconFactory $iconFactory = null,
+        ?IconFactory $iconFactory = null
     ) {
         $this->configurationRepository = $configurationRepository
             ?? GeneralUtility::getContainer()->get(AzureConfigurationRepository::class);
@@ -321,7 +321,7 @@ class ConfigurationController
         // Load other backend configs for the clone dropdown (exclude the current one)
         $otherConfigs = array_filter(
             $this->configurationRepository->findBackendConfigsPaginated(100, 0),
-            static fn(array $c) => $c['uid'] !== $configUid
+            static function (array $c) use ($configUid) { return $c['uid'] !== $configUid; }
         );
 
         if ($otherConfigs !== []) {

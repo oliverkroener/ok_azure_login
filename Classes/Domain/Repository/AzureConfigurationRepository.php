@@ -12,10 +12,23 @@ class AzureConfigurationRepository
 {
     private const TABLE = 'tx_okazurelogin_configuration';
 
+    /**
+     * @var ConnectionPool
+     */
+    private $connectionPool;
+
+    /**
+     * @var EncryptionService
+     */
+    private $encryptionService;
+
     public function __construct(
-        private readonly ConnectionPool $connectionPool,
-        private readonly EncryptionService $encryptionService,
-    ) {}
+        ConnectionPool $connectionPool,
+        EncryptionService $encryptionService
+    ) {
+        $this->connectionPool = $connectionPool;
+        $this->encryptionService = $encryptionService;
+    }
 
     /**
      * Find a frontend config by site root page ID (first matching record).
@@ -30,8 +43,8 @@ class AzureConfigurationRepository
                 'site_root_page_id',
                 $qb->createNamedParameter($siteRootPageId, Connection::PARAM_INT)
             ))
-            ->executeQuery()
-            ->fetchAssociative();
+            ->execute()
+            ->fetch(\PDO::FETCH_ASSOC);
 
         if ($row === false) {
             return null;
@@ -50,8 +63,8 @@ class AzureConfigurationRepository
         $row = $qb->select('*')
             ->from(self::TABLE)
             ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, Connection::PARAM_INT)))
-            ->executeQuery()
-            ->fetchAssociative();
+            ->execute()
+            ->fetch(\PDO::FETCH_ASSOC);
 
         if ($row === false) {
             return null;
@@ -80,8 +93,8 @@ class AzureConfigurationRepository
                 $qb->expr()->neq('client_secret_encrypted', $qb->createNamedParameter('')),
                 $qb->expr()->neq('redirect_uri_backend', $qb->createNamedParameter(''))
             )
-            ->executeQuery()
-            ->fetchAllAssociative();
+            ->execute()
+            ->fetchAll(\PDO::FETCH_ASSOC);
 
         $result = [];
         foreach ($rows as $row) {
@@ -103,8 +116,8 @@ class AzureConfigurationRepository
         return (int)$qb->count('uid')
             ->from(self::TABLE)
             ->where($qb->expr()->eq('site_root_page_id', $qb->createNamedParameter(0, Connection::PARAM_INT)))
-            ->executeQuery()
-            ->fetchOne();
+            ->execute()
+            ->fetchColumn(0);
     }
 
     /**
@@ -122,8 +135,8 @@ class AzureConfigurationRepository
             ->orderBy('uid', 'ASC')
             ->setFirstResult($offset)
             ->setMaxResults($limit)
-            ->executeQuery()
-            ->fetchAllAssociative();
+            ->execute()
+            ->fetchAll(\PDO::FETCH_ASSOC);
 
         $result = [];
         foreach ($rows as $row) {
@@ -252,8 +265,8 @@ class AzureConfigurationRepository
         $encryptedSecret = $qb->select('client_secret_encrypted')
             ->from(self::TABLE)
             ->where($qb->expr()->eq('uid', $qb->createNamedParameter($uid, Connection::PARAM_INT)))
-            ->executeQuery()
-            ->fetchOne();
+            ->execute()
+            ->fetchColumn(0);
 
         if ($encryptedSecret !== false && $encryptedSecret !== '') {
             return $encryptedSecret;
@@ -280,8 +293,8 @@ class AzureConfigurationRepository
                 'site_root_page_id',
                 $qb->createNamedParameter($siteRootPageId, Connection::PARAM_INT)
             ))
-            ->executeQuery()
-            ->fetchAssociative();
+            ->execute()
+            ->fetch(\PDO::FETCH_ASSOC);
 
         return $row === false ? null : $row;
     }

@@ -11,7 +11,9 @@ use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Context\Context;
+use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -32,13 +34,20 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
+    /**
+     * @var AzureOAuthService
+     */
+    private $azureOAuthService;
+
     public function __construct(
-        private readonly AzureOAuthService $azureOAuthService,
-    ) {}
+        AzureOAuthService $azureOAuthService
+    ) {
+        $this->azureOAuthService = $azureOAuthService;
+    }
 
     private function appendParam(string $url, string $key, string $value): string
     {
-        $separator = str_contains($url, '?') ? '&' : '?';
+        $separator = strpos($url, '?') !== false ? '&' : '?';
         return $url . $separator . rawurlencode($key) . '=' . rawurlencode($value);
     }
 
@@ -98,65 +107,95 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
         $request = $request->withAttribute('azure_login_user', $userInfo);
 
         // Determine application type and inject login trigger
-        $applicationType = $request->getAttribute('applicationType', 'frontend');
+        // In TYPO3 10, applicationType is an integer bitmask
+        $applicationType = $request->getAttribute('applicationType', 0);
+        $isBackend = (bool)($applicationType & SystemEnvironmentBuilder::REQUESTTYPE_BE);
 
-        if ($applicationType === 'backend' || $loginType === 'backend') {
-            // Backend: inject login_status=login to trigger BE auth chain
-            $body = $request->getParsedBody() ?? [];
-            $body['login_status'] = 'login';
-            $body['userident'] = 'azure-oauth';
-            $body['username'] = $userInfo['email'];
-            $request = $request->withParsedBody($body);
-            // TYPO3 v11 reads login data from $_POST superglobals, not PSR-7 body
+        if ($isBackend || $loginType === 'backend') {
+            // Backend: handle auth entirely here to avoid die() in TYPO3's backend chain.
+            // TYPO3's BackendUserAuthenticator calls backendCheckLogin() which uses
+            // HttpUtility::redirect() + die() for flow control, preventing our middleware
+            // from ever receiving the response. Also, start() sets the session cookie via
+            // PHP's header() function (not PSR-7), so it would not be in the PSR-7 response.
+
+            // Inject login trigger fields into $_POST (read by GeneralUtility::_POST())
             $_POST['login_status'] = 'login';
             $_POST['userident'] = 'azure-oauth';
             $_POST['username'] = $userInfo['email'];
-            $this->logger->debug('Injected BE login fields', ['username' => $userInfo['email']]);
-        } else {
-            // Frontend: inject logintype=login to trigger FE auth chain
-            $body = $request->getParsedBody() ?? [];
-            $body['logintype'] = 'login';
-            $body['user'] = $userInfo['email'];
-            $body['pass'] = 'azure-oauth';
-            $request = $request->withParsedBody($body);
-            // TYPO3 v11 reads login data from $_POST superglobals, not PSR-7 body
-            $_POST['logintype'] = 'login';
-            $_POST['user'] = $userInfo['email'];
-            $_POST['pass'] = 'azure-oauth';
-            $this->logger->debug('Injected FE login fields', ['user' => $userInfo['email']]);
+
+            // Update the global request so auth services can read our attributes
+            $GLOBALS['TYPO3_REQUEST'] = $request;
+
+            // Create and initialize the backend user — triggers the full auth chain
+            $backendUser = GeneralUtility::makeInstance(BackendUserAuthentication::class);
+            $GLOBALS['BE_USER'] = $backendUser;
+            $backendUser->start();
+
+            if (empty($backendUser->user['uid'])) {
+                $this->logger->debug('Azure OAuth: BE login failed after start()');
+                return new RedirectResponse(
+                    $this->appendParam($returnUrl, 'azure_login_error', 'auth_failed'),
+                    303
+                );
+            }
+
+            $this->logger->debug('Azure OAuth: BE login succeeded', [
+                'uid' => $backendUser->user['uid'],
+                'username' => $backendUser->user['username'] ?? '',
+            ]);
+
+            // Build redirect response, carrying the session cookie with SameSite=Lax.
+            // start() set the cookie via PHP header(); capture it and move into PSR-7.
+            $redirect = new RedirectResponse($returnUrl, 303);
+            foreach (headers_list() as $rawHeader) {
+                if (stripos($rawHeader, 'Set-Cookie:') === 0) {
+                    $cookieValue = ltrim(substr($rawHeader, strlen('Set-Cookie:')));
+                    $cookieValue = preg_replace('/SameSite=Strict/i', 'SameSite=Lax', $cookieValue);
+                    $redirect = $redirect->withAddedHeader('Set-Cookie', $cookieValue);
+                }
+            }
+            header_remove('Set-Cookie');
+
+            $this->logger->debug('Azure OAuth BE redirect', [
+                'returnUrl' => $returnUrl,
+            ]);
+            return $redirect;
         }
+
+        // Frontend: inject logintype=login to trigger FE auth chain
+        $body = $request->getParsedBody() ?? [];
+        $body['logintype'] = 'login';
+        $body['user'] = $userInfo['email'];
+        $body['pass'] = 'azure-oauth';
+        $request = $request->withParsedBody($body);
+        $_POST['logintype'] = 'login';
+        $_POST['user'] = $userInfo['email'];
+        $_POST['pass'] = 'azure-oauth';
+        $this->logger->debug('Injected FE login fields', ['user' => $userInfo['email']]);
 
         // Update the global request so auth services can read our attributes
         $GLOBALS['TYPO3_REQUEST'] = $request;
 
-        // Pass to the next middleware (which includes TYPO3's auth middleware)
+        // Pass to the next middleware (which includes TYPO3's FE auth middleware)
         $response = $handler->handle($request);
 
         // Check if frontend login actually succeeded
-        if ($loginType === 'frontend') {
-            $context = GeneralUtility::makeInstance(Context::class);
-            $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
-            if (!$isLoggedIn) {
-                $this->logger->debug('Azure OAuth: FE login failed after auth chain', ['email' => $userInfo['email'] ?? '']);
-                $returnUrl = $this->appendParam($returnUrl, 'azure_login_error', 'auth_failed');
-            } else {
-                $returnUrl = $this->appendParam($returnUrl, 'azure_login_success', '1');
-            }
+        $context = GeneralUtility::makeInstance(Context::class);
+        $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
+        if (!$isLoggedIn) {
+            $this->logger->debug('Azure OAuth: FE login failed after auth chain', ['email' => $userInfo['email'] ?? '']);
+            $returnUrl = $this->appendParam($returnUrl, 'azure_login_error', 'auth_failed');
+        } else {
+            $returnUrl = $this->appendParam($returnUrl, 'azure_login_success', '1');
         }
 
-        // Preserve Set-Cookie headers from the auth chain response.
-        // TYPO3 defaults to SameSite=Strict for BE cookies, but after a cross-site
-        // redirect from Microsoft, the browser won't send Strict cookies on the
-        // subsequent same-site navigation. Downgrade to Lax for this response only.
-        // Note: FE cookies default to SameSite=Lax, so this is a no-op for frontend.
-        // If FE.cookieSameSite is ever changed to "strict", the same issue will occur.
+        // Preserve Set-Cookie headers from the auth chain response (SameSite=Lax is default for FE).
         $redirect = new RedirectResponse($returnUrl, 303);
         foreach ($response->getHeader('Set-Cookie') as $cookie) {
-            $cookie = preg_replace('/SameSite=Strict/i', 'SameSite=Lax', $cookie);
             $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
         }
 
-        $this->logger->debug('Azure OAuth redirect', [
+        $this->logger->debug('Azure OAuth FE redirect', [
             'returnUrl' => $returnUrl,
             'cookiesCarried' => count($response->getHeader('Set-Cookie')),
         ]);

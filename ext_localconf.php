@@ -1,50 +1,38 @@
 <?php
 
-declare(strict_types=1);
-
-defined('TYPO3') or die();
-
-use OliverKroener\OkAzureLogin\Authentication\AzureLoginAuthService;
-use OliverKroener\OkAzureLogin\Controller\LoginController;
-use OliverKroener\OkAzureLogin\Controller\LogoutController;
-use OliverKroener\OkAzureLogin\LoginProvider\AzureLoginProvider;
-use TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider;
-use TYPO3\CMS\Core\Imaging\IconRegistry;
-use TYPO3\CMS\Core\Utility\ExtensionManagementUtility;
-use TYPO3\CMS\Core\Utility\GeneralUtility;
-use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
+defined('TYPO3_MODE') or die();
 
 // Frontend plugin (FE-only)
-ExtensionUtility::configurePlugin(
+\TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
     'OkAzureLogin',
     'Login',
     [
-        LoginController::class => 'show',
+        \OliverKroener\OkAzureLogin\Controller\LoginController::class => 'show',
     ],
     [
-        LoginController::class => 'show',
+        \OliverKroener\OkAzureLogin\Controller\LoginController::class => 'show',
     ],
-    ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
+    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
 );
 
 // Frontend logout plugin (FE-only)
-ExtensionUtility::configurePlugin(
+\TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
     'OkAzureLogin',
     'Logout',
     [
-        LogoutController::class => 'show,logout',
+        \OliverKroener\OkAzureLogin\Controller\LogoutController::class => 'show,logout',
     ],
     [
-        LogoutController::class => 'show,logout',
+        \OliverKroener\OkAzureLogin\Controller\LogoutController::class => 'show,logout',
     ],
-    ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
+    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
 );
 
 // Authentication service for FE + BE
-ExtensionManagementUtility::addService(
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addService(
     'ok_azure_login',
     'auth',
-    AzureLoginAuthService::class,
+    \OliverKroener\OkAzureLogin\Authentication\AzureLoginAuthService::class,
     [
         'title' => 'Azure Login Authentication',
         'description' => 'Authentication service for frontend and backend users using Microsoft Entra ID (Azure AD)',
@@ -54,20 +42,22 @@ ExtensionManagementUtility::addService(
         'quality' => 50,
         'os' => '',
         'exec' => '',
-        'className' => AzureLoginAuthService::class,
+        'className' => \OliverKroener\OkAzureLogin\Authentication\AzureLoginAuthService::class,
     ]
 );
 
-// Register icon for the backend login provider
-$iconRegistry = GeneralUtility::makeInstance(IconRegistry::class);
+// Register icons
+$iconRegistry = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+    \TYPO3\CMS\Core\Imaging\IconRegistry::class
+);
 $iconRegistry->registerIcon(
     'ext-ok-azure-login',
-    SvgIconProvider::class,
+    \TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider::class,
     ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg']
 );
 $iconRegistry->registerIcon(
     'ext-ok-azure-login-microsoft',
-    SvgIconProvider::class,
+    \TYPO3\CMS\Core\Imaging\IconProvider\SvgIconProvider::class,
     ['source' => 'EXT:ok_azure_login/Resources/Public/Icons/MicrosoftLogo.svg']
 );
 
@@ -77,8 +67,8 @@ $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'state'
 $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_success';
 $GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_error';
 
-// Register page TSconfig for new content element wizard (TYPO3 11 compat)
-ExtensionManagementUtility::addPageTSConfig(
+// Register page TSconfig for new content element wizard
+\TYPO3\CMS\Core\Utility\ExtensionManagementUtility::addPageTSConfig(
     '@import "EXT:ok_azure_login/Configuration/page.tsconfig"'
 );
 
@@ -86,8 +76,8 @@ ExtensionManagementUtility::addPageTSConfig(
 // since our template already includes both the Azure button and username/password fields.
 unset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1433416747]);
 $GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']['azure-login'] = [
-    'provider' => AzureLoginProvider::class,
+    'provider' => \OliverKroener\OkAzureLogin\LoginProvider\AzureLoginProvider::class,
     'sorting' => 75,
-    'iconIdentifier' => 'ext-ok-azure-login',
+    'icon-class' => 'ext-ok-azure-login',
     'label' => 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:backendLogin.label',
 ];

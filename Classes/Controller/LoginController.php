@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OliverKroener\OkAzureLogin\Controller;
 
 use OliverKroener\OkAzureLogin\Service\AzureOAuthService;
-use Psr\Http\Message\ResponseInterface;
 use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
@@ -13,23 +12,33 @@ use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
 
 class LoginController extends ActionController
 {
-    public function __construct(
-        private readonly AzureOAuthService $azureOAuthService,
-    ) {}
+    /**
+     * @var AzureOAuthService
+     */
+    private $azureOAuthService;
 
-    public function showAction(): ResponseInterface
+    public function __construct(
+        AzureOAuthService $azureOAuthService
+    ) {
+        $this->azureOAuthService = $azureOAuthService;
+    }
+
+    public function showAction(): void
     {
-        $site = $this->request->getAttribute('site');
+        $typo3Request = $GLOBALS['TYPO3_REQUEST'];
+
+        $site = $typo3Request->getAttribute('site');
         if ($site instanceof Site) {
             $this->azureOAuthService->setSiteRootPageId($site->getRootPageId());
         }
 
         if (!$this->azureOAuthService->isConfigured('frontend')) {
             $this->view->assign('configurationError', true);
-            return $this->htmlResponse();
+            return;
         }
 
-        $returnUrl = $this->request->getAttribute('normalizedParams')?->getRequestUri() ?? '/';
+        $normalizedParams = $typo3Request->getAttribute('normalizedParams');
+        $returnUrl = $normalizedParams !== null ? $normalizedParams->getRequestUri() : '/';
         $authorizeUrl = $this->azureOAuthService->buildAuthorizeUrl('frontend', $returnUrl);
 
         $this->view->assign('authorizeUrl', $authorizeUrl);
@@ -38,8 +47,8 @@ class LoginController extends ActionController
         $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
         $this->view->assign('isLoggedIn', $isLoggedIn);
 
-        $queryParams = $this->request->getQueryParams();
-        $parsedBody = $this->request->getParsedBody();
+        $queryParams = $typo3Request->getQueryParams();
+        $parsedBody = $typo3Request->getParsedBody();
         $isLogout = !$isLoggedIn && ($parsedBody['logintype'] ?? '') === 'logout';
         if ($isLogout) {
             $this->view->assign('logoutSuccess', true);
@@ -48,7 +57,5 @@ class LoginController extends ActionController
         } elseif (!$isLoggedIn && ($queryParams['azure_login_error'] ?? '') !== '') {
             $this->view->assign('loginError', $queryParams['azure_login_error']);
         }
-
-        return $this->htmlResponse();
     }
 }

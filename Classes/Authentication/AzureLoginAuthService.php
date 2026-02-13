@@ -15,9 +15,9 @@ class AzureLoginAuthService extends AbstractAuthenticationService implements Log
     /**
      * Look up a user by the email address provided by the Azure OAuth middleware.
      *
-     * @return array<string, mixed>|false User record or false if not responsible
+     * @return array|false User record or false if not responsible
      */
-    public function getUser(): array|false
+    public function getUser()
     {
         $azureUser = $this->getAzureUserFromRequest();
         if ($azureUser === null) {
@@ -48,8 +48,8 @@ class AzureLoginAuthService extends AbstractAuthenticationService implements Log
                     $queryBuilder->createNamedParameter($email)
                 )
             )
-            ->executeQuery()
-            ->fetchAssociative();
+            ->execute()
+            ->fetch(\PDO::FETCH_ASSOC);
 
         if ($row === false) {
             $this->logger->debug('Azure auth: no user found', ['email' => $email, 'table' => $table]);

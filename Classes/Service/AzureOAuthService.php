@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace OliverKroener\OkAzureLogin\Service;
 
-use Microsoft\Graph\GraphServiceClient;
-use Microsoft\Kiota\Authentication\Oauth\AuthorizationCodeContext;
+use GuzzleHttp\Client;
+use Microsoft\Graph\Graph;
+use Microsoft\Graph\Model\User;
 use OliverKroener\OkAzureLogin\Domain\Repository\AzureConfigurationRepository;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
@@ -13,13 +14,33 @@ class AzureOAuthService
 {
     private const STATE_TTL = 600; // 10 minutes
 
-    private int $siteRootPageId = 0;
-    private int $configUid = 0;
+    /**
+     * @var int
+     */
+    private $siteRootPageId = 0;
+
+    /**
+     * @var int
+     */
+    private $configUid = 0;
+
+    /**
+     * @var ExtensionConfiguration
+     */
+    private $extensionConfiguration;
+
+    /**
+     * @var AzureConfigurationRepository
+     */
+    private $configurationRepository;
 
     public function __construct(
-        private readonly ExtensionConfiguration $extensionConfiguration,
-        private readonly AzureConfigurationRepository $configurationRepository,
-    ) {}
+        ExtensionConfiguration $extensionConfiguration,
+        AzureConfigurationRepository $configurationRepository
+    ) {
+        $this->extensionConfiguration = $extensionConfiguration;
+        $this->configurationRepository = $configurationRepository;
+    }
 
     public function setSiteRootPageId(int $siteRootPageId): void
     {
@@ -83,16 +104,33 @@ class AzureOAuthService
             ? $config['redirectUriBackend']
             : $config['redirectUriFrontend'];
 
-        $tokenContext = new AuthorizationCodeContext(
-            $config['tenantId'],
-            $config['clientId'],
-            $config['clientSecret'],
-            $code,
-            $redirectUri
+        // Exchange authorization code for access token
+        $client = new Client();
+        $tokenResponse = $client->post(
+            sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $config['tenantId']),
+            [
+                'form_params' => [
+                    'client_id' => $config['clientId'],
+                    'client_secret' => $config['clientSecret'],
+                    'code' => $code,
+                    'redirect_uri' => $redirectUri,
+                    'grant_type' => 'authorization_code',
+                    'scope' => 'openid profile User.Read',
+                ],
+            ]
         );
 
-        $graphClient = new GraphServiceClient($tokenContext, ['User.Read']);
-        $me = $graphClient->me()->get()->wait();
+        $tokenData = json_decode((string)$tokenResponse->getBody(), true);
+        $accessToken = $tokenData['access_token'];
+
+        // Use Graph SDK v1 to get user profile
+        $graph = new Graph();
+        $graph->setAccessToken($accessToken);
+
+        /** @var User $me */
+        $me = $graph->createRequest('GET', '/me')
+            ->setReturnType(User::class)
+            ->execute();
 
         return [
             'email' => $me->getMail() ?? $me->getUserPrincipalName(),
@@ -141,7 +179,7 @@ class AzureOAuthService
 
         try {
             $payload = json_decode($json, true, 512, JSON_THROW_ON_ERROR);
-        } catch (\JsonException) {
+        } catch (\JsonException $e) {
             return null;
         }
 
