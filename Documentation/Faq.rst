@@ -20,10 +20,17 @@ Frequently Asked Questions (FAQ)
         :name: faq-user-exists
         :header-level: 2
 
-        Yes. The extension matches the authenticated Microsoft account to an
-        existing ``fe_users`` or ``be_users`` record by **email address**. If
-        no matching record is found, the login is rejected. The extension does
-        not create new user accounts automatically.
+        **Backend users**: Yes. A matching ``be_users`` record with the same
+        email address must already exist in TYPO3.
+
+        **Frontend users**: By default, yes. However, you can enable
+        **auto-creation** in the backend module. When enabled, a **disabled**
+        frontend user account is created automatically for authenticated
+        Microsoft users who have no matching ``fe_users`` record. An
+        administrator must then enable the account before the user can sign in.
+
+        See :ref:`configuration-backend-module` for details on configuring
+        auto-creation.
 
     ..  accordion-item:: Can I use this for both frontend and backend login?
         :name: faq-frontend-backend
@@ -56,6 +63,23 @@ Frequently Asked Questions (FAQ)
 
         See chapter :ref:`configuration`.
 
+    ..  accordion-item:: How does frontend user auto-creation work?
+        :name: faq-auto-create
+        :header-level: 2
+
+        When enabled in the backend module (per site), the extension
+        automatically creates a **disabled** ``fe_users`` record for Microsoft
+        users who authenticate successfully but have no existing TYPO3 account.
+
+        The new account receives the user's email as username, their display
+        name, given name, and surname from Microsoft Graph, a random password,
+        and any default frontend user groups you configured. The user sees a
+        blue "account pending" info message.
+
+        An administrator must manually enable the account in the TYPO3 backend
+        before the user can sign in. This prevents unauthorized access while
+        still streamlining the onboarding process.
+
     ..  accordion-item:: Can I use different Azure credentials per site?
         :name: faq-per-site
         :header-level: 2
@@ -64,6 +88,16 @@ Frequently Asked Questions (FAQ)
         Click on any page belonging to a site in the page tree, and the module
         resolves the correct site automatically. Each site can have its own
         Tenant ID, Client ID, Client Secret, and redirect URIs.
+
+    ..  accordion-item:: Can I have multiple backend login buttons?
+        :name: faq-multi-backend
+        :header-level: 2
+
+        Yes. Each site can have its own backend login configuration with a
+        separate Azure app registration. Every site with valid, enabled backend
+        credentials will show a separate "Sign in with Microsoft" button on the
+        TYPO3 backend login screen, identified by the configured login button
+        label (e.g. company name).
 
     ..  accordion-item:: How is the client secret stored?
         :name: faq-encryption

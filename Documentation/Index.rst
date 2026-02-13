@@ -51,7 +51,9 @@ Azure Login
     * **Authentication**: Uses OAuth 2.0 authorization code flow with HMAC-signed state parameter
     * **API Integration**: Retrieves user profile via Microsoft Graph API ``/me`` endpoint
     * **Flexibility**: Supports both frontend (``fe_users``) and backend (``be_users``) authentication
+    * **Auto-creation**: Optionally creates disabled frontend user accounts for new Microsoft users (admin must enable)
     * **Per-site configuration**: Manage Azure credentials per TYPO3 site via a dedicated backend module
+    * **Multi-tenant backend**: Multiple backend login configurations with separate Azure apps and login buttons
     * **Security**: Client secrets are encrypted at rest using PHP Sodium
 
 ..  card-grid::

@@ -81,6 +81,36 @@ can use its own Azure app registration.
             TYPO3 9.5 requires the ``index.php?route=`` format for backend URLs.
             Do **not** use clean URLs like ``/typo3/azure-login/callback``.
 
+    **Frontend User Auto-Creation**
+
+    These settings control automatic creation of frontend user accounts for
+    authenticated Microsoft users who do not yet have a TYPO3 account.
+
+    .. confval:: Auto-create frontend users
+
+        :type: boolean
+        :Default: disabled
+
+        When enabled, a **disabled** frontend user account is automatically
+        created for authenticated Microsoft users who have no matching
+        ``fe_users`` record. An administrator must manually enable the account
+        before the user can sign in.
+
+    .. confval:: User Storage Page
+
+        :type: int (page ID)
+        :Default: 0 (root level)
+
+        The page ID (PID) where newly created frontend user records will be
+        stored. Use the page browser button to select a page from the page tree.
+
+    .. confval:: Default User Groups
+
+        :type: multi-select
+
+        Frontend user groups assigned to newly created accounts. Hold
+        :kbd:`Ctrl` / :kbd:`Cmd` to select multiple groups.
+
 4.  Save
 
     Click the save button in the document header. A success message confirms the
@@ -106,6 +136,60 @@ Client secrets are encrypted at rest using PHP Sodium authenticated encryption
 
     If the encryption key changes after secrets have been saved, previously
     encrypted secrets become unreadable and must be re-entered.
+
+..  _configuration-backend-login:
+
+Backend login configuration
+---------------------------
+
+Each site can have one or more **backend login configurations**. These are
+managed in the "Backend" section of the backend module and control the "Sign in
+with Microsoft" buttons on the TYPO3 backend login screen.
+
+.. confval:: Enabled
+
+    :type: boolean
+    :Default: enabled
+
+    Enable or disable this backend login configuration. Disabled configurations
+    will not show a login button on the backend login screen.
+
+.. confval:: Login Button Label
+
+    :type: string
+
+    Required. A header shown above the login button on the backend login page
+    (e.g. the company name). This helps users identify which Azure tenant to
+    use when multiple configurations exist.
+
+.. confval:: Show Label on Login
+
+    :type: boolean
+    :Default: enabled
+
+    Whether to display the login button label above the sign-in button on the
+    backend login page.
+
+.. confval:: Backend Callback URL
+
+    :type: string (read-only)
+
+    The backend callback URL is displayed as a read-only field with a
+    **copy-to-clipboard** button. Register this URL as a redirect URI in your
+    Azure App Registration.
+
+    The URL follows the TYPO3 9.5 format:
+    ``https://your-domain.com/typo3/index.php?route=/azure-login/callback``
+
+    This URL is fixed for all backend configurations on the same domain.
+
+.. confval:: Clone from other Config
+
+    :type: select
+
+    Copy Tenant ID, Client ID, and optionally the Client Secret from another
+    existing backend configuration. Useful when multiple sites share the same
+    Azure app registration.
 
 ..  _configuration-extension-settings:
 
@@ -237,17 +321,25 @@ The authentication flow is handled entirely by the extension:
 2. The user authenticates at Microsoft and is redirected back with an
    authorization code.
 3. A PSR-15 middleware intercepts the callback, exchanges the code for user
-   information via the Microsoft Graph API, and injects the user data into the
-   TYPO3 authentication chain.
+   information via the Microsoft Graph API (email, display name, given name,
+   surname), and injects the user data into the TYPO3 authentication chain.
 4. The TYPO3 authentication service looks up the user by email in the
    appropriate user table (``fe_users`` or ``be_users``).
 5. If a matching, non-disabled user is found, they are logged in and
    redirected to the return URL.
+6. **Frontend auto-creation**: If no matching ``fe_users`` record exists and
+   auto-creation is enabled for the site, a **disabled** user account is created
+   automatically. The user sees an "account pending" info message and an
+   administrator must enable the account before the user can sign in.
 
-..  important::
-    The extension does **not** create new user accounts. A matching
-    ``fe_users`` or ``be_users`` record with the same email address must
-    already exist in TYPO3.
+..  note::
+    For **backend login**, a matching ``be_users`` record must already exist.
+    Auto-creation is only available for frontend users.
+
+..  tip::
+    On repeated login attempts, the extension automatically strips stale
+    ``azure_login_error`` and ``azure_login_success`` query parameters from the
+    return URL to prevent parameter accumulation.
 
 Security notes
 ==============

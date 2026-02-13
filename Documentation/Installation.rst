@@ -50,7 +50,9 @@ group in the New Content Element Wizard:
 Azure Login
     Renders a "Sign in with Microsoft" button. When a user authenticates via
     Microsoft Entra ID, the extension matches their email to an existing
-    ``fe_users`` record and logs them in.
+    ``fe_users`` record and logs them in. If auto-creation is enabled and no
+    matching account exists, a disabled account is created automatically (see
+    :ref:`configuration-backend-module`).
 
 Azure Logout
     Renders a "Sign out" button for logged-in users. Can optionally redirect
@@ -70,11 +72,17 @@ Backend login
 =============
 
 The extension automatically registers a backend login provider. Once configured
-(see :ref:`Configuration <configuration>`), a "Sign in with Microsoft" button
-appears on the TYPO3 backend login screen at ``/typo3/``.
+(see :ref:`Configuration <configuration>`), one or more "Sign in with Microsoft"
+buttons appear on the TYPO3 backend login screen at ``/typo3/``.
 
-No additional setup is needed for backend login beyond configuring the Azure
-credentials with a backend redirect URI.
+Each site with a valid, enabled backend login configuration will show a separate
+button, identified by the configured login button label (e.g. company name).
+Configure backend login in the backend module at :guilabel:`Web` >
+:guilabel:`Azure Login` under the **Backend** section.
+
+The backend callback URL is displayed as a read-only field in the backend
+configuration form with a copy-to-clipboard button for easy registration in the
+Azure portal.
 
 ..  important::
     The backend redirect URI must use the TYPO3 9.5 ``index.php?route=`` format:
