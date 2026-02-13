@@ -9,6 +9,7 @@ use Microsoft\Graph\Graph;
 use Microsoft\Graph\Model\User;
 use OliverKroener\OkAzureLogin\Domain\Repository\AzureConfigurationRepository;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class AzureOAuthService
 {
@@ -35,11 +36,13 @@ class AzureOAuthService
     private $configurationRepository;
 
     public function __construct(
-        ExtensionConfiguration $extensionConfiguration,
-        AzureConfigurationRepository $configurationRepository
+        ?ExtensionConfiguration $extensionConfiguration = null,
+        ?AzureConfigurationRepository $configurationRepository = null
     ) {
-        $this->extensionConfiguration = $extensionConfiguration;
-        $this->configurationRepository = $configurationRepository;
+        $this->extensionConfiguration = $extensionConfiguration
+            ?? GeneralUtility::makeInstance(ExtensionConfiguration::class);
+        $this->configurationRepository = $configurationRepository
+            ?? GeneralUtility::makeInstance(AzureConfigurationRepository::class);
     }
 
     public function setSiteRootPageId(int $siteRootPageId): void

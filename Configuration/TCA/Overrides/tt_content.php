@@ -9,53 +9,38 @@ use TYPO3\CMS\Extbase\Utility\ExtensionUtility;
 
 // Frontend plugin registration (FE-only — backend login uses the login provider)
 ExtensionUtility::registerPlugin(
-    'OkAzureLogin',
+    'OliverKroener.OkAzureLogin',
     'Login',
     'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.name',
-    'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg'
+    'ext-ok-azure-login-microsoft'
 );
 
-$cType = 'okazurelogin_login';
+$loginPluginSignature = 'okazurelogin_login';
 
-$GLOBALS['TCA']['tt_content']['types'][$cType]['showitem'] = '
-    --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:general,
-        --palette--;;general,
-        --palette--;;headers,
-        pi_flexform,
-    --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:access,
-        --palette--;;hidden,
-        --palette--;;access,
-';
+$GLOBALS['TCA']['tt_content']['types']['list']['subtypes_addlist'][$loginPluginSignature] = 'pi_flexform';
+$GLOBALS['TCA']['tt_content']['types']['list']['subtypes_excludelist'][$loginPluginSignature] = 'layout,select_key,pages,recursive';
 
 ExtensionManagementUtility::addPiFlexFormValue(
-    '*',
-    'FILE:EXT:ok_azure_login/Configuration/FlexForms/Login.xml',
-    $cType
+    $loginPluginSignature,
+    'FILE:EXT:ok_azure_login/Configuration/FlexForms/Login.xml'
 );
 
 // Frontend logout plugin registration
 ExtensionUtility::registerPlugin(
-    'OkAzureLogin',
+    'OliverKroener.OkAzureLogin',
     'Logout',
     'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.name',
-    'EXT:ok_azure_login/Resources/Public/Icons/Extension.svg'
+    'ext-ok-azure-login-microsoft'
 );
 
-$logoutCType = 'okazurelogin_logout';
+$logoutPluginSignature = 'okazurelogin_logout';
 
-$GLOBALS['TCA']['tt_content']['types'][$logoutCType]['showitem'] = '
-    --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:general,
-        --palette--;;general,
-        pi_flexform,
-    --div--;LLL:EXT:core/Resources/Private/Language/Form/locallang_tabs.xlf:access,
-        --palette--;;hidden,
-        --palette--;;access,
-';
+$GLOBALS['TCA']['tt_content']['types']['list']['subtypes_addlist'][$logoutPluginSignature] = 'pi_flexform';
+$GLOBALS['TCA']['tt_content']['types']['list']['subtypes_excludelist'][$logoutPluginSignature] = 'layout,select_key,pages,recursive';
 
 ExtensionManagementUtility::addPiFlexFormValue(
-    '*',
-    'FILE:EXT:ok_azure_login/Configuration/FlexForms/Logout.xml',
-    $logoutCType
+    $logoutPluginSignature,
+    'FILE:EXT:ok_azure_login/Configuration/FlexForms/Logout.xml'
 );
 
 ExtensionManagementUtility::addStaticFile(

@@ -10,5 +10,5 @@ clientSecret =
 # cat=azure/basic/040; type=string; label=Redirect URI (Frontend): OAuth callback URL for frontend login (e.g. https://example.com/azure-login/callback)
 redirectUriFrontend =
 
-# cat=azure/basic/050; type=string; label=Redirect URI (Backend): OAuth callback URL for backend login (e.g. https://example.com/typo3/azure-login/callback)
+# cat=azure/basic/050; type=string; label=Redirect URI (Backend): OAuth callback URL for backend login (e.g. https://example.com/typo3/index.php?route=/azure-login/callback)
 redirectUriBackend =

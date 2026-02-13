@@ -34,13 +34,20 @@ flow.
     that match your TYPO3 site:
 
     - Frontend: ``https://your-domain.com/your-login-page`` (the page containing the Azure Login content element)
-    - Backend: ``https://your-domain.com/typo3/azure-login/callback``
+    - Backend: ``https://your-domain.com/typo3/index.php?route=/azure-login/callback``
+
+    ..  important::
+        TYPO3 9.5 does **not** support clean backend URLs. The backend callback
+        URI **must** use the ``index.php?route=`` format:
+        ``https://your-domain.com/typo3/index.php?route=/azure-login/callback``
+
+        Using a clean URL like ``/typo3/azure-login/callback`` will result in an
+        Apache 404 error because the request never reaches TYPO3.
 
     ..  tip::
         You can add multiple redirect URIs later in the :guilabel:`Authentication`
         section of the app registration. The frontend redirect URI should point
-        to the page where Microsoft redirects the user after authentication. The
-        backend redirect URI uses the fixed route ``/typo3/azure-login/callback``.
+        to the page where Microsoft redirects the user after authentication.
 
         If you run a multi-site setup with different domains, add redirect URIs
         for each domain.

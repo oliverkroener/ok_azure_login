@@ -75,7 +75,11 @@ can use its own Azure app registration.
         The OAuth callback URL for **backend** login. This must match one of the
         redirect URIs registered in your Azure app.
 
-        Example: ``https://your-domain.com/typo3/azure-login/callback``
+        Example: ``https://your-domain.com/typo3/index.php?route=/azure-login/callback``
+
+        ..  important::
+            TYPO3 9.5 requires the ``index.php?route=`` format for backend URLs.
+            Do **not** use clean URLs like ``/typo3/azure-login/callback``.
 
 4.  Save
 
@@ -159,11 +163,15 @@ The following settings are available:
 
     The OAuth callback URL for **backend** login.
 
-    Example: ``https://your-domain.com/typo3/azure-login/callback``
+    Example: ``https://your-domain.com/typo3/index.php?route=/azure-login/callback``
+
+    ..  important::
+        TYPO3 9.5 requires the ``index.php?route=`` format for backend URLs.
+        Do **not** use clean URLs like ``/typo3/azure-login/callback``.
 
     ..  note::
-        The backend callback route ``/typo3/azure-login/callback`` is
-        automatically registered by the extension.
+        The backend callback route ``/azure-login/callback`` is automatically
+        registered by the extension.
 
 ..  _configuration-resolution-order:
 

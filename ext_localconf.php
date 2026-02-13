@@ -4,28 +4,26 @@ defined('TYPO3_MODE') or die();
 
 // Frontend plugin (FE-only)
 \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-    'OkAzureLogin',
+    'OliverKroener.OkAzureLogin',
     'Login',
     [
-        \OliverKroener\OkAzureLogin\Controller\LoginController::class => 'show',
+        'Login' => 'show',
     ],
     [
-        \OliverKroener\OkAzureLogin\Controller\LoginController::class => 'show',
-    ],
-    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
+        'Login' => 'show',
+    ]
 );
 
 // Frontend logout plugin (FE-only)
 \TYPO3\CMS\Extbase\Utility\ExtensionUtility::configurePlugin(
-    'OkAzureLogin',
+    'OliverKroener.OkAzureLogin',
     'Logout',
     [
-        \OliverKroener\OkAzureLogin\Controller\LogoutController::class => 'show,logout',
+        'Logout' => 'show,logout',
     ],
     [
-        \OliverKroener\OkAzureLogin\Controller\LogoutController::class => 'show,logout',
-    ],
-    \TYPO3\CMS\Extbase\Utility\ExtensionUtility::PLUGIN_TYPE_CONTENT_ELEMENT
+        'Logout' => 'show,logout',
+    ]
 );
 
 // Authentication service for FE + BE

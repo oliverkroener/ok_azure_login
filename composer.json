@@ -12,8 +12,8 @@
     "version": "1.0.0",
     "require": {
         "php": "^7.4",
-        "typo3/cms-core": "^10.4",
-        "typo3/cms-extbase": "^10.4",
+        "typo3/cms-core": "^9.5",
+        "typo3/cms-extbase": "^9.5",
         "microsoft/microsoft-graph": "^1.69"
     },
     "autoload": {

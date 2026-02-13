@@ -7,6 +7,7 @@ namespace OliverKroener\OkAzureLogin\Domain\Repository;
 use OliverKroener\OkAzureLogin\Service\EncryptionService;
 use TYPO3\CMS\Core\Database\Connection;
 use TYPO3\CMS\Core\Database\ConnectionPool;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class AzureConfigurationRepository
 {
@@ -23,11 +24,13 @@ class AzureConfigurationRepository
     private $encryptionService;
 
     public function __construct(
-        ConnectionPool $connectionPool,
-        EncryptionService $encryptionService
+        ?ConnectionPool $connectionPool = null,
+        ?EncryptionService $encryptionService = null
     ) {
-        $this->connectionPool = $connectionPool;
-        $this->encryptionService = $encryptionService;
+        $this->connectionPool = $connectionPool
+            ?? GeneralUtility::makeInstance(ConnectionPool::class);
+        $this->encryptionService = $encryptionService
+            ?? GeneralUtility::makeInstance(EncryptionService::class);
     }
 
     /**

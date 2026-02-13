@@ -13,10 +13,11 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
 use TYPO3\CMS\Core\Context\Context;
-use TYPO3\CMS\Core\Core\SystemEnvironmentBuilder;
+use TYPO3\CMS\Core\Context\UserAspect;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
+use TYPO3\CMS\Frontend\Authentication\FrontendUserAuthentication;
 
 /**
  * Intercepts OAuth callbacks from Microsoft Entra ID.
@@ -40,9 +41,10 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
     private $azureOAuthService;
 
     public function __construct(
-        AzureOAuthService $azureOAuthService
+        ?AzureOAuthService $azureOAuthService = null
     ) {
-        $this->azureOAuthService = $azureOAuthService;
+        $this->azureOAuthService = $azureOAuthService
+            ?? GeneralUtility::makeInstance(AzureOAuthService::class);
     }
 
     private function appendParam(string $url, string $key, string $value): string
@@ -107,11 +109,9 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
         $request = $request->withAttribute('azure_login_user', $userInfo);
 
         // Determine application type and inject login trigger
-        // In TYPO3 10, applicationType is an integer bitmask
-        $applicationType = $request->getAttribute('applicationType', 0);
-        $isBackend = (bool)($applicationType & SystemEnvironmentBuilder::REQUESTTYPE_BE);
+        $isBackend = (defined('TYPO3_MODE') && TYPO3_MODE === 'BE') || $loginType === 'backend';
 
-        if ($isBackend || $loginType === 'backend') {
+        if ($isBackend) {
             // Backend: handle auth entirely here to avoid die() in TYPO3's backend chain.
             // TYPO3's BackendUserAuthenticator calls backendCheckLogin() which uses
             // HttpUtility::redirect() + die() for flow control, preventing our middleware
@@ -162,42 +162,61 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
             return $redirect;
         }
 
-        // Frontend: inject logintype=login to trigger FE auth chain
-        $body = $request->getParsedBody() ?? [];
-        $body['logintype'] = 'login';
-        $body['user'] = $userInfo['email'];
-        $body['pass'] = 'azure-oauth';
-        $request = $request->withParsedBody($body);
+        // Frontend: handle auth directly to avoid the page resolver.
+        // The callback URL (/azure-login/callback) is not a real TYPO3 page,
+        // so passing to $handler->handle() would trigger PageNotFoundException.
+        // Instead, we create the FE user session ourselves (mirroring the BE approach).
+
+        // Inject login trigger fields into $_POST (read by GeneralUtility::_POST())
         $_POST['logintype'] = 'login';
         $_POST['user'] = $userInfo['email'];
         $_POST['pass'] = 'azure-oauth';
-        $this->logger->debug('Injected FE login fields', ['user' => $userInfo['email']]);
 
         // Update the global request so auth services can read our attributes
         $GLOBALS['TYPO3_REQUEST'] = $request;
 
-        // Pass to the next middleware (which includes TYPO3's FE auth middleware)
-        $response = $handler->handle($request);
+        $this->logger->debug('Azure OAuth: starting FE auth directly', ['user' => $userInfo['email']]);
+
+        // Create and initialise the frontend user — triggers the full auth chain
+        $frontendUser = GeneralUtility::makeInstance(FrontendUserAuthentication::class);
+        $frontendUser->start();
+        $frontendUser->unpack_uc();
+
+        // Store in TSFE for backwards-compatibility
+        if (isset($GLOBALS['TSFE'])) {
+            $GLOBALS['TSFE']->fe_user = $frontendUser;
+        }
+
+        // Register the frontend user as Context aspect
+        $context = GeneralUtility::makeInstance(Context::class);
+        $context->setAspect('frontend.user', GeneralUtility::makeInstance(UserAspect::class, $frontendUser));
 
         // Check if frontend login actually succeeded
-        $context = GeneralUtility::makeInstance(Context::class);
         $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
         if (!$isLoggedIn) {
-            $this->logger->debug('Azure OAuth: FE login failed after auth chain', ['email' => $userInfo['email'] ?? '']);
+            $this->logger->debug('Azure OAuth: FE login failed', ['email' => $userInfo['email'] ?? '']);
             $returnUrl = $this->appendParam($returnUrl, 'azure_login_error', 'auth_failed');
         } else {
+            $this->logger->debug('Azure OAuth: FE login succeeded', [
+                'uid' => $frontendUser->user['uid'] ?? null,
+                'username' => $frontendUser->user['username'] ?? '',
+            ]);
             $returnUrl = $this->appendParam($returnUrl, 'azure_login_success', '1');
         }
 
-        // Preserve Set-Cookie headers from the auth chain response (SameSite=Lax is default for FE).
+        // Build redirect response, carrying the session cookie.
+        // start() sets the cookie via PHP header(); capture it and move into PSR-7.
         $redirect = new RedirectResponse($returnUrl, 303);
-        foreach ($response->getHeader('Set-Cookie') as $cookie) {
-            $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
+        foreach (headers_list() as $rawHeader) {
+            if (stripos($rawHeader, 'Set-Cookie:') === 0) {
+                $cookieValue = ltrim(substr($rawHeader, strlen('Set-Cookie:')));
+                $redirect = $redirect->withAddedHeader('Set-Cookie', $cookieValue);
+            }
         }
+        header_remove('Set-Cookie');
 
         $this->logger->debug('Azure OAuth FE redirect', [
             'returnUrl' => $returnUrl,
-            'cookiesCarried' => count($response->getHeader('Set-Cookie')),
         ]);
         return $redirect;
     }

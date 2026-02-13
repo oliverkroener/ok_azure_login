@@ -6,7 +6,8 @@ mod.wizards.newContentElement.wizardItems.azurelogin {
             title = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.name
             description = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin.description
             tt_content_defValues {
-                CType = okazurelogin_login
+                CType = list
+                list_type = okazurelogin_login
             }
         }
         okazurelogin_logout {
@@ -14,7 +15,8 @@ mod.wizards.newContentElement.wizardItems.azurelogin {
             title = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.name
             description = LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_db.xlf:tx_okazurelogin_logout.description
             tt_content_defValues {
-                CType = okazurelogin_logout
+                CType = list
+                list_type = okazurelogin_logout
             }
         }
     }

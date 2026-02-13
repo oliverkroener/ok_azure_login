@@ -28,15 +28,15 @@ class AzureLoginProvider implements LoginProviderInterface
         ?AzureOAuthService $azureOAuthService = null,
         ?AzureConfigurationRepository $configurationRepository = null
     ) {
-        $container = GeneralUtility::getContainer();
         $this->azureOAuthService = $azureOAuthService
-            ?? $container->get(AzureOAuthService::class);
+            ?? GeneralUtility::makeInstance(AzureOAuthService::class);
         $this->configurationRepository = $configurationRepository
-            ?? $container->get(AzureConfigurationRepository::class);
+            ?? GeneralUtility::makeInstance(AzureConfigurationRepository::class);
     }
 
     public function render(StandaloneView $view, PageRenderer $pageRenderer, LoginController $loginController): void
     {
+        $pageRenderer->loadRequireJsModule('TYPO3/CMS/Backend/UserPassLogin');
         $view->assign('azureLogins', $this->collectBackendLogins());
         $view->setTemplatePathAndFilename(
             'EXT:ok_azure_login/Resources/Private/Templates/Login/AzureLoginForm.html'

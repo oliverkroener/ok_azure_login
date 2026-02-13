@@ -15,10 +15,10 @@ return [
         'oliverkroener/azure-oauth' => [
             'target' => AzureOAuthMiddleware::class,
             'after' => [
-                'typo3/cms-backend/backend-routing',
+                'typo3/cms-core/normalized-params-attribute',
             ],
             'before' => [
-                'typo3/cms-backend/authentication',
+                'typo3/cms-backend/backend-routing',
             ],
         ],
     ],

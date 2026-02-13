@@ -71,7 +71,14 @@ Backend login
 
 The extension automatically registers a backend login provider. Once configured
 (see :ref:`Configuration <configuration>`), a "Sign in with Microsoft" button
-appears as a separate tab on the TYPO3 backend login screen at ``/typo3/``.
+appears on the TYPO3 backend login screen at ``/typo3/``.
 
 No additional setup is needed for backend login beyond configuring the Azure
 credentials with a backend redirect URI.
+
+..  important::
+    The backend redirect URI must use the TYPO3 9.5 ``index.php?route=`` format:
+    ``https://your-domain.com/typo3/index.php?route=/azure-login/callback``
+
+    This URL must also be registered in the Azure portal under
+    :guilabel:`Authentication` > :guilabel:`Redirect URIs`.

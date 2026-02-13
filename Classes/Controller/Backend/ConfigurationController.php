@@ -41,7 +41,7 @@ class ConfigurationController
         ?IconFactory $iconFactory = null
     ) {
         $this->configurationRepository = $configurationRepository
-            ?? GeneralUtility::getContainer()->get(AzureConfigurationRepository::class);
+            ?? GeneralUtility::makeInstance(AzureConfigurationRepository::class);
         $this->siteFinder = $siteFinder ?? GeneralUtility::makeInstance(SiteFinder::class);
         $this->uriBuilder = $uriBuilder ?? GeneralUtility::makeInstance(UriBuilder::class);
         $this->iconFactory = $iconFactory ?? GeneralUtility::makeInstance(IconFactory::class);

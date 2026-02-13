@@ -8,19 +8,19 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Extension key**: `ok_azure_login`
 **Namespace**: `OliverKroener\OkAzureLogin\`
-**TYPO3 compatibility**: 11.5
-**PHP**: ^8.1
+**TYPO3 compatibility**: 9.5
+**PHP**: ^7.4
 
 ## Development Context
 
-This package lives at `backend/packages/ok-azure-login/` within the parent monorepo. It is a **Git submodule** with its own repository — commits must be made inside this directory first, then the parent repo reference updated.
+This package lives at `packages/ok_azure_login/` within the parent project. It is a **Git submodule** with its own repository — commits must be made inside this directory first, then the parent repo reference updated.
 
 See the root `CLAUDE.md` for DDEV setup, composer commands, and testing infrastructure.
 
 ```bash
-# From the DDEV project (backend/ as composer root):
-ddev exec composer typo3:flush   # Clear caches after any config/class changes
-ddev typo3 database:updateschema  # Apply schema changes after modifying ext_tables.sql
+# From the DDEV project:
+ddev exec vendor/bin/typo3cms cache:flush   # Clear caches after any config/class changes
+ddev typo3 database:updateschema             # Apply schema changes after modifying ext_tables.sql
 ```
 
 No package-level build, lint, or test commands exist yet. Use the parent monorepo's `composer ci:static` and `composer ci:tests` for quality checks.
@@ -41,8 +41,8 @@ The extension handles two login contexts (FE and BE) through a shared middleware
    - Updates `$GLOBALS['TYPO3_REQUEST']` so the auth chain can read the attribute
    - Injects login trigger fields into request body (`login_status=login` for BE, `logintype=login` for FE)
 4. **`AzureLoginAuthService`** (in TYPO3's auth chain) looks up user by email in `fe_users`/`be_users`, returns 200 (authenticated)
-6. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
-7. **Middleware redirects** to the return URL from state (HTTP 303)
+5. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
+6. **Middleware redirects** to the return URL from state (HTTP 303)
 
 ### Frontend Login
 
@@ -60,9 +60,11 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 ### Backend Login
 
 - **Login provider** (`AzureLoginProvider`) registered in `$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']`
-- Shows "Sign in with Microsoft" button on the `/typo3/` login screen as a separate tab
+- Replaces the default `UsernamePasswordLoginProvider`; the custom template includes both Azure buttons and standard username/password fields
 - Template: `Templates/Login/AzureLoginForm.html` (uses `<f:layout name="Login" />` from EXT:backend)
-- Callback route: `/typo3/azure-login/callback` → `AzureCallbackController` (public access, no CSRF token required)
+- The `UserPassLogin` RequireJS module is loaded in `AzureLoginProvider::render()` (not via `<f:be.pageRenderer>`) to match the TYPO3 9 pattern
+- Callback route: `/azure-login/callback` → `AzureCallbackController` (public access, no CSRF token required)
+- **TYPO3 9 callback URL format**: `https://domain.com/typo3/index.php?route=/azure-login/callback` (NOT clean URLs — see TYPO3 9.5 notes below)
 - Iterates all sites via `SiteFinder` to find first site with valid backend OAuth config
 
 ### Backend Configuration Module
@@ -84,7 +86,7 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 | `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret |
 | `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
 | `Authentication/AzureLoginAuthService` | `AbstractAuthenticationService` subclass; looks up users by email in auth chain, returns 200 for Azure-authenticated requests |
-| `LoginProvider/AzureLoginProvider` | Backend login provider; renders "Sign in with Microsoft" button, resolves site context for backend OAuth |
+| `LoginProvider/AzureLoginProvider` | Backend login provider; renders "Sign in with Microsoft" button + standard username/password form, loads `UserPassLogin` JS module |
 | `Controller/LoginController` | Extbase FE controller; `showAction` renders the frontend login button with configuration error handling |
 | `Controller/LogoutController` | Extbase FE controller; handles logout with optional Microsoft sign-out redirect |
 | `Controller/Backend/ConfigurationController` | Backend module controller; manages per-site Azure configuration with encryption key validation |
@@ -133,8 +135,7 @@ TypoScript (`constants.typoscript` / `setup.typoscript`) only configures Fluid t
 - **`ext_localconf.php`**: FE plugins (login + logout), auth service (subtypes `getUserFE,authUserFE,getUserBE,authUserBE`, priority 82), icon registration (`ext-ok-azure-login-microsoft`), backend login provider
 - **`ext_tables.php`**: Backend configuration module registration via `addModule()` under Web group with page tree navigation
 - **`Configuration/Backend/Routes.php`**: `/azure-login/callback` route with `'access' => 'public'`, plus module sub-routes for save/list/edit/delete actions
-- **`Configuration/Services.yaml`**: DI config, `AzureLoginProvider` marked `public: true`
-- **`Configuration/RequestMiddlewares.php`**: `AzureOAuthMiddleware` in both `frontend` (before FE auth) and `backend` (after routing, before BE auth) stacks
+- **`Configuration/RequestMiddlewares.php`**: `AzureOAuthMiddleware` in both `frontend` (before FE auth) and `backend` (before routing — required for TYPO3 9 callback URL handling) stacks
 - **`Configuration/TCA/Overrides/tt_content.php`**: FE content element plugin registration, static TypoScript
 - **`Configuration/page.tsconfig`**: New Content Element Wizard entries under custom "Azure Login" group
 
@@ -174,8 +175,7 @@ Both `AzureOAuthMiddleware` and `AzureLoginAuthService` implement `LoggerAwareIn
 
 ### Dependencies
 
-- `microsoft/microsoft-graph` ^2 — Graph SDK for user profile retrieval
-- `microsoft/kiota-authentication-phpleague` ^1 — OAuth token handling via `AuthorizationCodeContext`
+- `microsoft/microsoft-graph` ^1.69 — Graph SDK v1 for user profile retrieval (v2 requires PHP 8.1+)
 
 ### Languages
 
@@ -191,17 +191,60 @@ Language file groups:
 
 The extension requests `openid profile User.Read` (delegated permissions, user context).
 
-## TYPO3 11.5 Compatibility Notes
+## TYPO3 9.5 Compatibility Notes
 
-These patterns are specific to the TYPO3 11.5 APIs used by this extension:
+These patterns are specific to the TYPO3 9.5 APIs used by this extension:
+
+### Backend route URL format (critical)
+
+TYPO3 9 does **not** support clean backend URLs. All backend routes are accessed via `index.php` with a `route` query parameter:
+
+- **Correct**: `https://domain.com/typo3/index.php?route=/azure-login/callback`
+- **Wrong**: `https://domain.com/typo3/azure-login/callback` (Apache 404)
+
+This affects:
+- The **redirect URI** configured in Microsoft Azure portal and in the `tx_okazurelogin_configuration` database table
+- The backend middleware must run **before** `typo3/cms-backend/backend-routing` (not after), so it can intercept the OAuth callback before TYPO3's route resolver runs
+
+### Middleware positioning and direct auth handling
+
+Both FE and BE middleware stacks handle authentication **directly** — neither delegates to `$handler->handle()` for OAuth callbacks. Instead, each creates the user session object itself (`BackendUserAuthentication` / `FrontendUserAuthentication`), calls `start()`, captures `Set-Cookie` headers, and returns a redirect response.
+
+**Why**: Passing through the middleware chain via `$handler->handle()` would reach the page/route resolver, which fails because:
+- **Backend**: TYPO3 9's `BackendRouteInitialization` resolves routes via the `route` query parameter; the callback URL confuses routing
+- **Frontend**: The callback URL (`/azure-login/callback`) is not a real TYPO3 page, so the page resolver throws `PageNotFoundException`
+
+**Backend** middleware runs **before** routing:
+```php
+// Configuration/RequestMiddlewares.php — backend stack
+'after' => ['typo3/cms-core/normalized-params-attribute'],
+'before' => ['typo3/cms-backend/backend-routing'],
+```
+
+**Frontend** middleware runs **before** authentication:
+```php
+// Configuration/RequestMiddlewares.php — frontend stack
+'before' => ['typo3/cms-frontend/authentication'],
+```
+
+The frontend handler also registers the `frontend.user` Context aspect (via `UserAspect`) and sets `$GLOBALS['TSFE']->fe_user` for backwards-compatibility, mirroring what `FrontendUserAuthenticator` would do.
+
+### Backend login provider and template
+
+The extension replaces the default `UsernamePasswordLoginProvider` (unset in `ext_localconf.php`) with `AzureLoginProvider`, which renders both Azure login buttons and the standard username/password form in a single template.
+
+Key requirements for the login template in TYPO3 9:
+- `UserPassLogin` RequireJS module must be loaded in `AzureLoginProvider::render()` via `$pageRenderer->loadRequireJsModule()` (not via `<f:be.pageRenderer>` in the template)
+- Password field must have `data-rsa-encryption="t3-field-userident"` attribute for TYPO3 9's password handling
+- Use the same HTML structure and CSS classes as TYPO3 9's core `UserPassLoginForm.html`
 
 ### Backend module registration
 
-TYPO3 11 uses `ExtensionManagementUtility::addModule()` in `ext_tables.php` with a `routeTarget` pointing to a controller method. Module sub-routes are registered in `Configuration/Backend/Routes.php`. The v12+ `Configuration/Backend/Modules.php` format is not supported.
+TYPO3 9 uses `ExtensionManagementUtility::addModule()` in `ext_tables.php` with a `routeTarget` pointing to a controller method. Module sub-routes are registered in `Configuration/Backend/Routes.php`. The v12+ `Configuration/Backend/Modules.php` format is not supported.
 
 ### ModuleTemplate rendering pattern
 
-TYPO3 11 uses `ModuleTemplate` + `StandaloneView` (not `ModuleTemplateFactory`):
+TYPO3 9 uses `ModuleTemplate` + `StandaloneView` (not `ModuleTemplateFactory`):
 
 ```php
 $moduleTemplate = GeneralUtility::makeInstance(ModuleTemplate::class);
@@ -213,7 +256,7 @@ return new HtmlResponse($moduleTemplate->renderContent());
 
 ### JavaScript modules
 
-TYPO3 11 uses RequireJS (not ES modules). JS files follow CamelCase naming (`Backend/DeleteConfirm.js`) and are loaded via `loadRequireJsModule('TYPO3/CMS/OkAzureLogin/Backend/DeleteConfirm')`.
+TYPO3 9 uses RequireJS (not ES modules). JS files follow CamelCase naming (`Backend/DeleteConfirm.js`) and are loaded via `loadRequireJsModule('TYPO3/CMS/OkAzureLogin/Backend/DeleteConfirm')`.
 
 ### Flash message severity
 
@@ -246,6 +289,10 @@ foreach ($response->getHeader('Set-Cookie') as $cookie) {
     $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
 }
 ```
+
+### No Services.yaml / No DI container
+
+TYPO3 9 does not use Symfony DI for extensions. All dependencies are resolved via `GeneralUtility::makeInstance()` with optional constructor parameters defaulting to `null`.
 
 ## Known Issues
 
