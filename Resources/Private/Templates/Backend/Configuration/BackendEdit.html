@@ -49,8 +49,7 @@
                             <option value="{cfg.uid}"
                                     data-tenant-id="{cfg.tenantId}"
                                     data-client-id="{cfg.clientId}"
-                                    data-has-secret="{f:if(condition: '{cfg.hasSecret}', then: '1', else: '0')}"
-                                    data-redirect-uri="{cfg.redirectUriBackend}">
+                                    data-has-secret="{f:if(condition: '{cfg.hasSecret}', then: '1', else: '0')}">
                                 <f:if condition="{cfg.backendLoginLabel}">
                                     <f:then>{cfg.backendLoginLabel} ({cfg.tenantId})</f:then>
                                     <f:else>{cfg.tenantId}</f:else>

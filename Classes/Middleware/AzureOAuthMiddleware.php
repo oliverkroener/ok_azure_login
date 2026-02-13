@@ -220,8 +220,10 @@ class AzureOAuthMiddleware implements MiddlewareInterface, LoggerAwareInterface
         $context = GeneralUtility::makeInstance(Context::class);
         $context->setAspect('frontend.user', GeneralUtility::makeInstance(UserAspect::class, $frontendUser));
 
-        // Check if frontend login actually succeeded
-        $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
+        // Check if frontend login actually succeeded.
+        // Do NOT use Context 'isLoggedIn' — for FE users it requires both a UID
+        // AND at least one user group. Check the user record directly instead.
+        $isLoggedIn = !empty($frontendUser->user['uid']);
         if (!$isLoggedIn) {
             $this->logger->debug('Azure OAuth: FE login failed', ['email' => $userInfo['email'] ?? '']);
             $errorCode = $this->handleFailedFrontendLogin($userInfo);

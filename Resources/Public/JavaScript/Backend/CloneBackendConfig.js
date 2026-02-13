@@ -1,8 +1,8 @@
 /**
  * Clone values from another backend config into the current backend edit form.
- * Copies Tenant ID, Client ID, and Client Secret.
+ * Copies Tenant ID, Client ID, and optionally Client Secret.
  * Shows a TYPO3 Modal confirmation with details.
- * Redirect URI is editable — Clone button stays disabled until it is changed.
+ * The backend callback URL is fixed (not per-config), so it is not included here.
  */
 define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], function($, Modal, Severity) {
     'use strict';
@@ -21,7 +21,6 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
         var tenantId = option.dataset.tenantId || '';
         var clientId = option.dataset.clientId || '';
         var hasSecret = option.dataset.hasSecret === '1';
-        var redirectUri = option.dataset.redirectUri || '';
         var sourceUid = option.value;
 
         var title = select.dataset.cloneConfirmTitle || 'Clone Configuration';
@@ -31,8 +30,6 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
         var lblTenant = select.dataset.cloneLabelTenant || 'Tenant ID';
         var lblClient = select.dataset.cloneLabelClient || 'Client ID';
         var lblSecret = select.dataset.cloneLabelSecret || 'Client Secret';
-        var lblRedirect = select.dataset.cloneLabelRedirect || 'Redirect URI (Backend)';
-        var redirectNote = select.dataset.cloneRedirectNote || 'Please configure the correct Redirect URI for this backend configuration.';
         var secretClonedText = select.dataset.cloneSecretCloned || 'Client secret will be copied from the selected configuration on save.';
 
         var html = '<table class="table table-sm table-bordered mb-3">';
@@ -42,11 +39,6 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
             ? '<div class="form-check"><input type="checkbox" class="form-check-input" id="cloneSecretCheckbox" />'
             + ' <label class="form-check-label" for="cloneSecretCheckbox">' + escapeHtml(secretClonedText) + '</label></div>'
             : '<span class="text-muted">&mdash;</span>') + '</td></tr>';
-        html += '<tr><th>' + escapeHtml(lblRedirect) + '</th><td>'
-            + '<input type="url" class="form-control form-control-sm" id="cloneRedirectUriInput" '
-            + 'value="' + escapeAttr(redirectUri) + '" placeholder="https://example.com/typo3/azure-login/callback" />'
-            + '<div class="form-text text-warning mb-0">' + escapeHtml(redirectNote) + '</div>'
-            + '</td></tr>';
         html += '</table>';
 
         var modal = Modal.confirm(title, $('<div>').html(html), Severity.info, [
@@ -63,30 +55,13 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
             }
         ]);
 
-        // Disable Clone button until redirect URI is changed
-        setTimeout(function() {
-            var cloneBtn = modal.find('button[name="clone"]');
-            var redirectInput = modal.find('#cloneRedirectUriInput');
-            if (cloneBtn.length && redirectInput.length) {
-                cloneBtn.prop('disabled', true);
-                redirectInput.on('input', function() {
-                    var changed = redirectInput.val().trim() !== redirectUri;
-                    cloneBtn.prop('disabled', !changed || redirectInput.val().trim() === '');
-                });
-            }
-        }, 100);
-
         modal.on('button.clicked', function(evt) {
             var name = evt.target.getAttribute('name');
             if (name === 'clone') {
-                var redirectInput = modal.find('#cloneRedirectUriInput');
-                var newRedirectUri = redirectInput.length ? redirectInput.val().trim() : '';
-
                 Modal.dismiss();
 
                 var tenantInput = document.getElementById('tenantId');
                 var clientInput = document.getElementById('clientId');
-                var redirectBackendInput = document.getElementById('redirectUriBackend');
                 var cloneSecretInput = document.getElementById('cloneSecretFromUid');
                 var secretField = document.getElementById('clientSecret');
                 var secretHelp = secretField ? secretField.closest('.row') : null;
@@ -99,10 +74,6 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
                 if (clientInput) {
                     clientInput.value = clientId;
                     clientInput.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-                if (redirectBackendInput && newRedirectUri) {
-                    redirectBackendInput.value = newRedirectUri;
-                    redirectBackendInput.dispatchEvent(new Event('input', { bubbles: true }));
                 }
                 var secretCheckbox = modal.find('#cloneSecretCheckbox');
                 if (cloneSecretInput && hasSecret && secretCheckbox.length && secretCheckbox.prop('checked')) {
@@ -124,9 +95,5 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
         var div = document.createElement('div');
         div.textContent = str;
         return div.innerHTML;
-    }
-
-    function escapeAttr(str) {
-        return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
 });

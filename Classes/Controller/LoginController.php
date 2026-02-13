@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace OliverKroener\OkAzureLogin\Controller;
 
 use OliverKroener\OkAzureLogin\Service\AzureOAuthService;
-use TYPO3\CMS\Core\Context\Context;
 use TYPO3\CMS\Core\Site\Entity\Site;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Mvc\Controller\ActionController;
@@ -43,8 +42,10 @@ class LoginController extends ActionController
 
         $this->view->assign('authorizeUrl', $authorizeUrl);
 
-        $context = GeneralUtility::makeInstance(Context::class);
-        $isLoggedIn = $context->getPropertyFromAspect('frontend.user', 'isLoggedIn');
+        // Do NOT use Context 'isLoggedIn' — for FE users it requires both a UID
+        // AND at least one user group. Check the fe_user session directly instead.
+        $feUser = $GLOBALS['TSFE']->fe_user ?? null;
+        $isLoggedIn = $feUser !== null && !empty($feUser->user['uid']);
         $this->view->assign('isLoggedIn', $isLoggedIn);
 
         $queryParams = $typo3Request->getQueryParams();

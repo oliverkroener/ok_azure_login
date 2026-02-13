@@ -279,7 +279,7 @@ TYPO3 9 uses RequireJS (not ES modules). JS files follow CamelCase naming and ar
 
 Available modules:
 - **`Backend/DeleteConfirm.js`** — Intercepts delete button clicks, shows TYPO3 modal confirmation dialog
-- **`Backend/PageBrowser.js`** — Element Browser integration for selecting storage PID; opens TYPO3 popup, listens for `typo3:elementBrowser:elementAdded` postMessage, updates hidden input + display label
+- **`Backend/PageBrowser.js`** — Element Browser integration for selecting storage PID; defines `window.setFormValueFromBrowseWin` callback (TYPO3 9 pattern), opens popup, updates hidden input + display label
 - **`Backend/CopyCallbackUrl.js`** — Copies the backend callback URL to clipboard via `document.execCommand('copy')` fallback (no Clipboard API needed for TYPO3 9 browsers), shows checkmark feedback
 
 ### Flash message severity
@@ -313,6 +313,22 @@ foreach ($response->getHeader('Set-Cookie') as $cookie) {
     $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
 }
 ```
+
+### FE `isLoggedIn` requires user groups (critical)
+
+TYPO3 9's `UserAspect::isLoggedIn()` for **frontend** users requires **both** `uid > 0` **AND** non-empty `groupData['uid']`. A user without any FE group is considered "not logged in" by the Context API even if their session is valid.
+
+**Do NOT use** `$context->getPropertyFromAspect('frontend.user', 'isLoggedIn')` to check FE login status. Instead check the session directly:
+
+```php
+$isLoggedIn = !empty($GLOBALS['TSFE']->fe_user->user['uid']);
+```
+
+This affects both the middleware (login result check) and `LoginController::showAction` (template variable).
+
+### Element Browser callback (TYPO3 9 pattern)
+
+TYPO3 9's Element Browser uses `window.opener.setFormValueFromBrowseWin(fieldName, value, label)` — NOT the `postMessage` approach used in TYPO3 10+. Custom modules that open an Element Browser popup must define this global function on `window` before opening the popup.
 
 ### No Services.yaml / No DI container
 
