@@ -13,6 +13,8 @@ use TYPO3\CMS\Backend\Template\Components\ButtonBar;
 use TYPO3\CMS\Backend\Template\ModuleTemplateFactory;
 use TYPO3\CMS\Backend\Utility\BackendUtility;
 use TYPO3\CMS\Core\Authentication\BackendUserAuthentication;
+use TYPO3\CMS\Core\Database\Connection;
+use TYPO3\CMS\Core\Database\ConnectionPool;
 use TYPO3\CMS\Core\Http\RedirectResponse;
 use TYPO3\CMS\Core\Imaging\IconFactory;
 use TYPO3\CMS\Core\Localization\LanguageService;
@@ -35,6 +37,7 @@ class ConfigurationController
         private readonly SiteFinder $siteFinder,
         private readonly UriBuilder $uriBuilder,
         private readonly IconFactory $iconFactory,
+        private readonly ConnectionPool $connectionPool,
     ) {}
 
     // ── Frontend config (per-site) ───────────────────────────────────
@@ -109,6 +112,27 @@ class ConfigurationController
             );
         }
 
+        $feGroups = $this->fetchFeGroups();
+        $selectedFeGroupUids = array_filter(
+            array_map('intval', explode(',', $config['defaultFeGroups'] ?? ''))
+        );
+
+        // Page browser for feUserStoragePid
+        $elementBrowserUrl = (string)$this->uriBuilder->buildUriFromRoute('wizard_element_browser', [
+            'mode' => 'db',
+            'bparams' => 'feUserStoragePid|||pages|',
+        ]);
+        $currentPid = (int)($config['feUserStoragePid'] ?? 0);
+        $feUserStoragePidTitle = '';
+        if ($currentPid > 0) {
+            $pageRow = BackendUtility::getRecord('pages', $currentPid, 'title');
+            $feUserStoragePidTitle = $pageRow ? '[' . $currentPid . '] ' . $pageRow['title'] : '[' . $currentPid . ']';
+        }
+
+        GeneralUtility::makeInstance(PageRenderer::class)->loadJavaScriptModule(
+            '@oliverkroener/ok-azure-login/backend/page-browser.js'
+        );
+
         $view->assignMultiple([
             'config' => $config ?? [
                 'tenantId' => '',
@@ -117,6 +141,9 @@ class ConfigurationController
                 'redirectUriFrontend' => '',
                 'redirectUriBackend' => '',
                 'backendLoginLabel' => '',
+                'autoCreateFeUser' => false,
+                'defaultFeGroups' => '',
+                'feUserStoragePid' => 0,
             ],
             'siteRootPageId' => $siteRootPageId,
             'siteIdentifier' => $site->getIdentifier(),
@@ -127,6 +154,10 @@ class ConfigurationController
             'frontendUrl' => $frontendUrl,
             'backendUrl' => $backendUrl,
             'backendConfigs' => $backendConfigs,
+            'feGroups' => $feGroups,
+            'selectedFeGroupUids' => $selectedFeGroupUids,
+            'elementBrowserUrl' => $elementBrowserUrl,
+            'feUserStoragePidTitle' => $feUserStoragePidTitle,
         ]);
 
         return $view->renderResponse('Backend/Configuration/Edit');
@@ -149,6 +180,11 @@ class ConfigurationController
         }
 
         if ($configPageId > 0) {
+            $defaultFeGroups = $data['defaultFeGroups'] ?? [];
+            if (is_array($defaultFeGroups)) {
+                $defaultFeGroups = implode(',', array_filter($defaultFeGroups));
+            }
+
             $this->configurationRepository->save($configPageId, [
                 'tenantId' => trim((string)($data['tenantId'] ?? '')),
                 'clientId' => trim((string)($data['clientId'] ?? '')),
@@ -156,6 +192,9 @@ class ConfigurationController
                 'redirectUriFrontend' => trim((string)($data['redirectUriFrontend'] ?? '')),
                 'redirectUriBackend' => '',
                 'backendLoginLabel' => '',
+                'autoCreateFeUser' => (bool)($data['autoCreateFeUser'] ?? false),
+                'defaultFeGroups' => (string)$defaultFeGroups,
+                'feUserStoragePid' => (int)($data['feUserStoragePid'] ?? 0),
             ]);
 
             $cloneSecretFromUid = (int)($data['cloneSecretFromUid'] ?? 0);
@@ -321,6 +360,18 @@ class ConfigurationController
             );
         }
 
+        // Load copy-to-clipboard JS module
+        GeneralUtility::makeInstance(PageRenderer::class)->loadJavaScriptModule(
+            '@oliverkroener/ok-azure-login/backend/copy-callback-url.js'
+        );
+
+        // Build backend callback URL from route config
+        $backendCallbackUrl = (string)$this->uriBuilder->buildUriFromRoute(
+            'azure_login_callback',
+            [],
+            \TYPO3\CMS\Backend\Routing\UriBuilder::ABSOLUTE_URL
+        );
+
         $view->assignMultiple([
             'config' => $config ?? [
                 'enabled' => true,
@@ -328,7 +379,6 @@ class ConfigurationController
                 'tenantId' => '',
                 'clientId' => '',
                 'clientSecret' => '',
-                'redirectUriBackend' => '',
                 'backendLoginLabel' => '',
             ],
             'configUid' => $configUid,
@@ -339,6 +389,7 @@ class ConfigurationController
             'listUrl' => $listUrl,
             'id' => $id,
             'otherConfigs' => array_values($otherConfigs),
+            'backendCallbackUrl' => $backendCallbackUrl,
         ]);
 
         return $view->renderResponse('Backend/Configuration/BackendEdit');
@@ -359,7 +410,6 @@ class ConfigurationController
                 'tenantId' => trim((string)($data['tenantId'] ?? '')),
                 'clientId' => trim((string)($data['clientId'] ?? '')),
                 'clientSecret' => (string)($data['clientSecret'] ?? ''),
-                'redirectUriBackend' => trim((string)($data['redirectUriBackend'] ?? '')),
                 'backendLoginLabel' => trim((string)($data['backendLoginLabel'] ?? '')),
             ]
         );
@@ -393,6 +443,25 @@ class ConfigurationController
     }
 
     // ── Helpers ──────────────────────────────────────────────────────
+
+    private function fetchFeGroups(): array
+    {
+        $qb = $this->connectionPool->getQueryBuilderForTable('fe_groups');
+        $rows = $qb->select('uid', 'title')
+            ->from('fe_groups')
+            ->orderBy('title', 'ASC')
+            ->executeQuery()
+            ->fetchAllAssociative();
+
+        $result = [];
+        foreach ($rows as $row) {
+            $result[] = [
+                'uid' => (int)$row['uid'],
+                'title' => $row['title'],
+            ];
+        }
+        return $result;
+    }
 
     private function resolveContext(string $context): string
     {

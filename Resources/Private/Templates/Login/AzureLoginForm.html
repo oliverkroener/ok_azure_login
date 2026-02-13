@@ -13,6 +13,16 @@
         }"
     />
 
+    <f:if condition="{azureLoginError}">
+        <div class="alert alert-danger" role="alert" style="margin-bottom: 16px;">
+            <f:switch expression="{azureLoginError}">
+                <f:case value="exchange_failed"><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:tx_okazurelogin.error.exchange_failed" /></f:case>
+                <f:case value="auth_failed"><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:tx_okazurelogin.error.auth_failed" /></f:case>
+                <f:defaultCase><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang.xlf:tx_okazurelogin.error.generic" /></f:defaultCase>
+            </f:switch>
+        </div>
+    </f:if>
+
     <f:if condition="{azureLogins}">
         <f:for each="{azureLogins}" as="azureLogin">
             <div class="form-group" style="padding: 0 0 8px 0;">

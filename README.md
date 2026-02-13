@@ -1,33 +1,68 @@
-# Backend and Frontend Login with Azure Active Directory and Office 365
+# TYPO3 Azure Login (ok_azure_login)
 
-In today's digital landscape, secure authentication and authorization are crucial for any application. Azure Active Directory (Azure AD) and Office 365 provide robust solutions for backend and frontend login, ensuring the protection of user data and seamless access to resources.
+TYPO3 extension for frontend and backend login via Microsoft Entra ID (Azure AD) using the OAuth 2.0 authorization code flow and Microsoft Graph API.
 
-## Backend Login with Azure AD
+|                  |                                              |
+|------------------|----------------------------------------------|
+| Extension key    | `ok_azure_login`                             |
+| Composer         | `oliverkroener/ok-azure-login`               |
+| TYPO3            | 12.4, 13.4, 14.0                            |
+| PHP              | ^8.1                                         |
 
-Azure AD offers a comprehensive set of features for backend authentication. By integrating Azure AD into your application, you can leverage its identity management capabilities, including user authentication, single sign-on (SSO), and multi-factor authentication (MFA).
+## Features
 
-To enable backend login with Azure AD, you need to register your application in the Azure portal. This registration process generates a client ID and client secret, which you can use to authenticate your application with Azure AD.
+- **Frontend login** via "Sign in with Microsoft" content element
+- **Backend login** via login provider on the TYPO3 backend login screen
+- **Per-site configuration** with encrypted client secret storage
+- **Multi-tenant support** with multiple backend login buttons
+- OAuth 2.0 authorization code flow with HMAC-signed state parameter
+- User lookup by email in `fe_users` / `be_users`
+- Backend redirect URI auto-derived from route configuration
+- Frontend logout with optional Microsoft sign-out redirect
+- Translations: English, German, French
 
-Once your application is registered, you can use Azure AD's authentication endpoints to implement login functionality. These endpoints support various authentication protocols, such as OAuth 2.0 and OpenID Connect, allowing you to choose the one that best fits your application's requirements.
+## Quick start
 
-## Frontend Login with Azure AD
+1. Register an app in [Microsoft Entra ID](https://portal.azure.com) (see [Azure setup docs](Documentation/Azure.rst))
+2. Install the extension via Composer:
+   ```bash
+   composer require oliverkroener/ok-azure-login
+   ```
+3. Configure credentials in **Web > Azure Login** backend module
+4. Add the **Azure Login** content element to a frontend page
+5. Register the redirect URIs from the backend module in your Azure app
 
-In addition to backend login, Azure AD also provides seamless frontend login capabilities. With Azure AD's JavaScript library, you can easily integrate Azure AD authentication into your frontend application, enabling users to sign in using their Azure AD or Office 365 credentials.
+## Configuration
 
-To implement frontend login with Azure AD, you need to include the Azure AD JavaScript library in your application. This library provides functions for handling authentication flows, such as redirecting users to the Azure AD login page and retrieving access tokens.
+Credentials are managed per TYPO3 site via the backend module. Each site stores:
 
-By leveraging Azure AD's frontend login capabilities, you can create a unified login experience for your users, allowing them to seamlessly access both backend and frontend resources using their Azure AD or Office 365 credentials.
+- **Tenant ID** and **Client ID** from Azure App Registration
+- **Client Secret** (encrypted at rest with PHP Sodium)
+- **Redirect URI (Frontend)** -- manually configured, points to the login page
+- **Redirect URI (Backend)** -- auto-generated from route config, shown as read-only with copy button
 
-## Office 365 Integration
+The backend redirect URI (`/typo3/azure-login/callback`) is derived from `Configuration/Backend/Routes.php` and cannot be misconfigured.
 
-Office 365, Microsoft's cloud-based productivity suite, can be seamlessly integrated with Azure AD for enhanced login capabilities. By integrating Office 365 with Azure AD, you can enable users to sign in to your application using their Office 365 credentials, providing a familiar and convenient login experience.
+Global credentials via Extension Configuration serve as a fallback for single-site setups.
 
-To integrate Office 365 with Azure AD, you need to configure your Azure AD tenant to trust the Office 365 service. This configuration allows Azure AD to authenticate users using their Office 365 credentials and retrieve relevant user information.
+## Documentation
 
-Once Office 365 is integrated with Azure AD, you can leverage Azure AD's authentication endpoints and JavaScript library to implement frontend login with Office 365. This integration simplifies the login process for users, as they can use their existing Office 365 credentials to access your application.
+Full documentation is in the [Documentation/](Documentation/) directory:
 
-## Conclusion
+- [Azure Entra ID setup](Documentation/Azure.rst)
+- [Configuration](Documentation/Configuration/Index.rst)
+- [Installation](Documentation/Installation.rst)
+- [FAQ](Documentation/Faq.rst)
 
-Backend and frontend login with Azure AD and Office 365 offer powerful authentication and authorization capabilities for your applications. By leveraging Azure AD's identity management features and integrating Office 365, you can provide a secure and seamless login experience for your users.
+## Security
 
-Remember to follow best practices when implementing login functionality, such as using secure protocols, enforcing strong password policies, and regularly monitoring and auditing user access. With Azure AD and Office 365, you can build robust and secure login systems that protect your users' data and ensure a smooth user experience.
+- Client secrets encrypted at rest (PHP Sodium `sodium_crypto_secretbox`)
+- HMAC-signed OAuth state with 10-minute TTL
+- Per-site credential isolation
+- CSRF token handling for TYPO3 v13+
+
+## Requirements
+
+- `microsoft/microsoft-graph` ^2
+- `microsoft/kiota-authentication-phpleague` ^1
+- TYPO3 encryption key must be configured

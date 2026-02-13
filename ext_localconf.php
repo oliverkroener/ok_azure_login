@@ -55,6 +55,12 @@ ExtensionManagementUtility::addService(
     ]
 );
 
+// Exclude OAuth query parameters from cHash calculation
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_error';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_success';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'code';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'state';
+
 // Backend login provider – replaces default UsernamePasswordLoginProvider
 // since our template already includes both the Azure button and username/password fields.
 unset($GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders'][1433416747]);

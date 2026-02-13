@@ -81,7 +81,7 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 
 | Class | Purpose |
 |-------|---------|
-| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params, per-site config resolution |
+| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params, per-site config resolution. Backend redirect URI is auto-derived from route config via `getBackendCallbackUrl()` |
 | `Service/EncryptionService` | Sodium-based authenticated encryption for client secrets using `sodium_crypto_secretbox`; key derived from TYPO3 encryption key |
 | `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret |
 | `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
@@ -108,11 +108,15 @@ Managed via the backend module (Web > Azure Login). One record per site root pag
 | `client_id` | Application (Client) ID from Azure App Registration |
 | `client_secret_encrypted` | Sodium-encrypted client secret |
 | `redirect_uri_frontend` | OAuth callback URL for frontend login |
-| `redirect_uri_backend` | OAuth callback URL for backend login |
+| `redirect_uri_backend` | Legacy field, no longer used for OAuth flow (backend URI is auto-derived from route config) |
+
+#### Backend Redirect URI (auto-derived)
+
+The backend OAuth redirect URI is **not manually configured**. It is automatically derived from the registered backend route `azure_login_callback` in `Configuration/Backend/Routes.php` using TYPO3's `BackendUriBuilder::buildUriFromRoute()`. This produces the absolute URL (e.g. `https://example.com/typo3/azure-login/callback`). The backend config form shows this URL as a read-only field with a copy button so admins can register it in Azure AD.
 
 #### Extension Configuration (fallback — global)
 
-Settings in `ext_conf_template.txt`: `tenantId`, `clientId`, `clientSecret`, `redirectUriFrontend`, `redirectUriBackend`.
+Settings in `ext_conf_template.txt`: `tenantId`, `clientId`, `clientSecret`, `redirectUriFrontend`.
 
 Used when no database record exists for the current site.
 
@@ -242,6 +246,29 @@ foreach ($response->getHeader('Set-Cookie') as $cookie) {
     $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
 }
 ```
+
+### cHash exclusion for OAuth query parameters
+
+TYPO3's `cacheHash` mechanism rejects unknown query parameters. The OAuth flow appends `azure_login_error`, `azure_login_success`, `code`, and `state` to frontend URLs. All four must be registered in `ext_localconf.php`:
+
+```php
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_error';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'azure_login_success';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'code';
+$GLOBALS['TYPO3_CONF_VARS']['FE']['cacheHash']['excludedParameters'][] = 'state';
+```
+
+Without this, redirects like `/?azure_login_error=account_pending` trigger a "Request parameters could not be validated" cHash error.
+
+### Return URL must be stripped of stale login params
+
+When a user retries login from a page that already has `?azure_login_error=...` in the URL, that URL becomes the new OAuth `returnUrl` stored in the state parameter. The middleware then appends another `azure_login_error` or `azure_login_success`, causing parameter accumulation (e.g. `?azure_login_error=account_pending&azure_login_error=account_pending&azure_login_success=1`).
+
+`AzureOAuthMiddleware::stripLoginParams()` removes `azure_login_error` and `azure_login_success` from the return URL before appending the current result. Any new OAuth-related query parameters added to the redirect flow must also be stripped here.
+
+### Login success takes priority over error display
+
+`LoginController::showAction` must check `azure_login_success` before `azure_login_error`. When the auth flow ultimately succeeds, only the success message is shown — even if stale error params somehow survive in the URL.
 
 ## Known Issues
 

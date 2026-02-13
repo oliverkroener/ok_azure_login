@@ -45,6 +45,11 @@ class AzureLoginProvider implements LoginProviderInterface
     {
         $view->assign('azureLogins', $this->collectBackendLogins());
 
+        $azureLoginError = $request->getQueryParams()['azure_login_error'] ?? '';
+        if ($azureLoginError !== '') {
+            $view->assign('azureLoginError', $azureLoginError);
+        }
+
         // Add extension template paths so the login form template can be resolved
         $templatePaths = $view->getRenderingContext()->getTemplatePaths();
         $currentPaths = $templatePaths->getTemplateRootPaths();

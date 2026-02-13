@@ -31,8 +31,10 @@ Frequently Asked Questions (FAQ)
 
         Yes. For **frontend login**, add the **Azure Login** content element to a
         page. For **backend login**, the extension automatically adds a "Sign in
-        with Microsoft" tab to the TYPO3 backend login screen. Both require their
-        own redirect URI configured in Microsoft Entra ID.
+        with Microsoft" tab to the TYPO3 backend login screen. The frontend
+        redirect URI must be configured manually. The backend redirect URI is
+        auto-generated and can be copied from the backend configuration module.
+        Both URIs must be registered in Microsoft Entra ID.
 
     ..  accordion-item:: Which Microsoft Graph API permissions are needed?
         :name: faq-permissions
@@ -63,7 +65,8 @@ Frequently Asked Questions (FAQ)
         Yes. The backend module stores configuration per TYPO3 site root page.
         Click on any page belonging to a site in the page tree, and the module
         resolves the correct site automatically. Each site can have its own
-        Tenant ID, Client ID, Client Secret, and redirect URIs.
+        Tenant ID, Client ID, Client Secret, and frontend redirect URI.
+        The backend redirect URI is auto-generated from the route configuration.
 
     ..  accordion-item:: How is the client secret stored?
         :name: faq-encryption

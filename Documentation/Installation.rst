@@ -74,4 +74,6 @@ The extension automatically registers a backend login provider. Once configured
 appears as a separate tab on the TYPO3 backend login screen at ``/typo3/``.
 
 No additional setup is needed for backend login beyond configuring the Azure
-credentials with a backend redirect URI.
+credentials. The backend redirect URI is automatically derived from the route
+configuration and shown as a read-only field with a copy button in the backend
+module. Register this URL in your Azure app registration.

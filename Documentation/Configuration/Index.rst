@@ -70,12 +70,17 @@ can use its own Azure app registration.
 
     .. confval:: Redirect URI (Backend)
 
-        :type: string (URL)
+        :type: read-only (auto-generated)
 
-        The OAuth callback URL for **backend** login. This must match one of the
-        redirect URIs registered in your Azure app.
+        The OAuth callback URL for **backend** login, automatically derived from
+        the registered backend route. This field is read-only and shown with a
+        copy button. Register this URL as a redirect URI in your Azure app.
 
         Example: ``https://your-domain.com/typo3/azure-login/callback``
+
+        ..  note::
+            This URL is generated from the route configuration in
+            ``Configuration/Backend/Routes.php`` and cannot be changed manually.
 
 4.  Save
 
@@ -157,13 +162,10 @@ The following settings are available:
     :type: string
     :Default: (empty)
 
-    The OAuth callback URL for **backend** login.
-
-    Example: ``https://your-domain.com/typo3/azure-login/callback``
-
-    ..  note::
-        The backend callback route ``/typo3/azure-login/callback`` is
-        automatically registered by the extension.
+    **Deprecated.** The backend redirect URI is now automatically derived from
+    the registered backend route (``/typo3/azure-login/callback``). This setting
+    is ignored when using database configuration. It may still be used as a
+    fallback in Extension Configuration for legacy setups.
 
 ..  _configuration-resolution-order:
 

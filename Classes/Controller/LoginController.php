@@ -39,16 +39,17 @@ class LoginController extends ActionController
         $this->view->assign('isLoggedIn', $isLoggedIn);
 
         $queryParams = $this->request->getQueryParams();
-        $errorCode = $queryParams['azure_login_error'] ?? '';
-        if ($errorCode !== '') {
-            $this->view->assign('loginError', $errorCode);
-        }
         $parsedBody = $this->request->getParsedBody();
         $isLogout = !$isLoggedIn && ($parsedBody['logintype'] ?? '') === 'logout';
         if ($isLogout) {
             $this->view->assign('logoutSuccess', true);
         } elseif (($queryParams['azure_login_success'] ?? '') !== '') {
             $this->view->assign('loginSuccess', true);
+        } else {
+            $errorCode = $queryParams['azure_login_error'] ?? '';
+            if ($errorCode !== '') {
+                $this->view->assign('loginError', $errorCode);
+            }
         }
 
         return $this->htmlResponse();

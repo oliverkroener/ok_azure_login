@@ -84,7 +84,7 @@
                 <source>Redirect URI (Backend)</source>
             </trans-unit>
             <trans-unit id="label.redirectUriBackend.description" xml:space="preserve">
-                <source>OAuth callback URL for backend login (e.g. https://example.com/typo3/azure-login/callback)</source>
+                <source>Register this URL as redirect URI in your Azure App Registration.</source>
             </trans-unit>
             <trans-unit id="warning.encryptionKeyMissing.title" xml:space="preserve">
                 <source>Encryption Key Missing</source>
@@ -145,6 +145,30 @@
             </trans-unit>
             <trans-unit id="label.clientSecret.cloned" xml:space="preserve">
                 <source>Client secret will be copied from the backend configuration on save.</source>
+            </trans-unit>
+            <trans-unit id="label.autoCreateSection" xml:space="preserve">
+                <source>Frontend User Auto-Creation</source>
+            </trans-unit>
+            <trans-unit id="label.autoCreateSection.description" xml:space="preserve">
+                <source>When a user authenticates via Microsoft but has no matching frontend user account, a disabled account can be created automatically. An administrator must then enable the account before the user can sign in.</source>
+            </trans-unit>
+            <trans-unit id="label.autoCreateFeUser" xml:space="preserve">
+                <source>Auto-create frontend users</source>
+            </trans-unit>
+            <trans-unit id="label.autoCreateFeUser.description" xml:space="preserve">
+                <source>When enabled, a disabled frontend user account is automatically created for authenticated Microsoft users who do not yet have an account.</source>
+            </trans-unit>
+            <trans-unit id="label.feUserStoragePid" xml:space="preserve">
+                <source>User Storage Page</source>
+            </trans-unit>
+            <trans-unit id="label.feUserStoragePid.description" xml:space="preserve">
+                <source>Page ID (PID) where new frontend user records will be stored. Use 0 for the root level.</source>
+            </trans-unit>
+            <trans-unit id="label.defaultFeGroups" xml:space="preserve">
+                <source>Default User Groups</source>
+            </trans-unit>
+            <trans-unit id="label.defaultFeGroups.description" xml:space="preserve">
+                <source>Groups assigned to newly created frontend users. Hold Ctrl/Cmd to select multiple groups.</source>
             </trans-unit>
             <trans-unit id="confirm.delete.title" xml:space="preserve">
                 <source>Delete Configuration</source>

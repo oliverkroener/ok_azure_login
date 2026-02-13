@@ -19,19 +19,28 @@
                 </div>
             </f:if>
             <f:if condition="{loginError}">
-                <div class="ms-login-error" role="alert">
-                    <f:switch expression="{loginError}">
-                        <f:case value="exchange_failed">
-                            <f:translate key="tx_okazurelogin.error.exchange_failed">Authentication with Microsoft failed. Please try again.</f:translate>
-                        </f:case>
-                        <f:case value="auth_failed">
-                            <f:translate key="tx_okazurelogin.error.auth_failed">Login failed. Your account may not have access.</f:translate>
-                        </f:case>
-                        <f:defaultCase>
-                            <f:translate key="tx_okazurelogin.error.generic">Login failed. Please try again.</f:translate>
-                        </f:defaultCase>
-                    </f:switch>
-                </div>
+                <f:switch expression="{loginError}">
+                    <f:case value="account_pending">
+                        <div class="ms-login-info" role="status">
+                            <f:translate key="tx_okazurelogin.error.account_pending">Your account has been created but is not yet activated. An administrator must enable your account before you can sign in.</f:translate>
+                        </div>
+                    </f:case>
+                    <f:defaultCase>
+                        <div class="ms-login-error" role="alert">
+                            <f:switch expression="{loginError}">
+                                <f:case value="exchange_failed">
+                                    <f:translate key="tx_okazurelogin.error.exchange_failed">Authentication with Microsoft failed. Please try again.</f:translate>
+                                </f:case>
+                                <f:case value="auth_failed">
+                                    <f:translate key="tx_okazurelogin.error.auth_failed">Login failed. Your account may not have access.</f:translate>
+                                </f:case>
+                                <f:defaultCase>
+                                    <f:translate key="tx_okazurelogin.error.generic">Login failed. Please try again.</f:translate>
+                                </f:defaultCase>
+                            </f:switch>
+                        </div>
+                    </f:defaultCase>
+                </f:switch>
             </f:if>
             <f:if condition="{isLoggedIn}">
                 <f:then>
@@ -124,6 +133,15 @@
             background-color: #FDE7E9;
             color: #A80000;
             border-left: 3px solid #A80000;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            font-size: 14px;
+        }
+        .ms-login-info {
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            background-color: #E6F2FB;
+            color: #0063B1;
+            border-left: 3px solid #0063B1;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             font-size: 14px;
         }
