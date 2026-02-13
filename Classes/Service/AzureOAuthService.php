@@ -7,7 +7,9 @@ namespace OliverKroener\OkAzureLogin\Service;
 use Microsoft\Graph\GraphServiceClient;
 use Microsoft\Kiota\Authentication\Oauth\AuthorizationCodeContext;
 use OliverKroener\OkAzureLogin\Domain\Repository\AzureConfigurationRepository;
+use TYPO3\CMS\Backend\Routing\UriBuilder as BackendUriBuilder;
 use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
+use TYPO3\CMS\Core\Utility\GeneralUtility;
 
 class AzureOAuthService
 {
@@ -34,14 +36,17 @@ class AzureOAuthService
     public function isConfigured(string $loginType = 'frontend'): bool
     {
         $config = $this->getConfiguration($loginType);
-        $redirectUri = $loginType === 'backend'
-            ? ($config['redirectUriBackend'] ?? '')
-            : ($config['redirectUriFrontend'] ?? '');
+        if ($loginType === 'backend') {
+            // Backend redirect URI is derived from route config, no manual field needed
+            return ($config['tenantId'] ?? '') !== ''
+                && ($config['clientId'] ?? '') !== ''
+                && ($config['clientSecret'] ?? '') !== '';
+        }
 
         return ($config['tenantId'] ?? '') !== ''
             && ($config['clientId'] ?? '') !== ''
             && ($config['clientSecret'] ?? '') !== ''
-            && $redirectUri !== '';
+            && ($config['redirectUriFrontend'] ?? '') !== '';
     }
 
     public function buildAuthorizeUrl(string $loginType, string $returnUrl): string
@@ -51,7 +56,7 @@ class AzureOAuthService
         $clientId = $config['clientId'];
 
         $redirectUri = $loginType === 'backend'
-            ? $config['redirectUriBackend']
+            ? $this->getBackendCallbackUrl()
             : $config['redirectUriFrontend'];
 
         $state = $this->createState($loginType, $returnUrl);
@@ -73,14 +78,14 @@ class AzureOAuthService
     }
 
     /**
-     * @return array{email: string, displayName: string}
+     * @return array{email: string, displayName: string, givenName: string, surname: string}
      */
     public function exchangeCodeForUserInfo(string $code, string $loginType): array
     {
         $config = $this->getConfiguration($loginType);
 
         $redirectUri = $loginType === 'backend'
-            ? $config['redirectUriBackend']
+            ? $this->getBackendCallbackUrl()
             : $config['redirectUriFrontend'];
 
         $tokenContext = new AuthorizationCodeContext(
@@ -97,6 +102,8 @@ class AzureOAuthService
         return [
             'email' => $me->getMail() ?? $me->getUserPrincipalName(),
             'displayName' => $me->getDisplayName() ?? '',
+            'givenName' => $me->getGivenName() ?? '',
+            'surname' => $me->getSurname() ?? '',
         ];
     }
 
@@ -188,6 +195,19 @@ class AzureOAuthService
 
         // Fallback to extension configuration
         return (array)$this->extensionConfiguration->get('ok_azure_login');
+    }
+
+    /**
+     * Build the backend callback URL from the registered backend route.
+     */
+    private function getBackendCallbackUrl(): string
+    {
+        $uriBuilder = GeneralUtility::makeInstance(BackendUriBuilder::class);
+        return (string)$uriBuilder->buildUriFromRoute(
+            'azure_login_callback',
+            [],
+            BackendUriBuilder::ABSOLUTE_URL
+        );
     }
 
     private function getEncryptionKey(): string

@@ -13,7 +13,7 @@
                project-issues="https://github.com/oliverkroener/ok-azure-login/issues"
                edit-on-github-branch="main"
                edit-on-github="oliverkroener/ok-azure-login"
-               typo3-core-preferred="13.4"
+               typo3-core-preferred="11.5"
                interlink-shortcode="oliverkroener/ok-azure-login"
     />
     <project title="Azure Login"

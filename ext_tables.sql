@@ -14,6 +14,10 @@ CREATE TABLE tx_okazurelogin_configuration (
     redirect_uri_frontend varchar(1024) DEFAULT '' NOT NULL,
     redirect_uri_backend varchar(1024) DEFAULT '' NOT NULL,
 
+    auto_create_fe_user tinyint(1) unsigned DEFAULT '0' NOT NULL,
+    default_fe_groups varchar(255) DEFAULT '' NOT NULL,
+    fe_user_storage_pid int(11) unsigned DEFAULT '0' NOT NULL,
+
     PRIMARY KEY (uid),
     KEY site_root (site_root_page_id)
 );

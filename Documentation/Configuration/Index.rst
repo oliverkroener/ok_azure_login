@@ -16,7 +16,9 @@ Backend module (recommended)
 
 The recommended way to configure Azure credentials is via the dedicated backend
 module. This allows you to manage credentials **per TYPO3 site**, so each site
-can use its own Azure app registration.
+can use its own Azure app registration. The module also supports multiple
+**backend login configurations**, each appearing as a separate login button on
+the TYPO3 backend login screen.
 
 ..  rst-class:: bignums-xxl
 
@@ -29,62 +31,158 @@ can use its own Azure app registration.
     Click on any page that belongs to the site you want to configure. The module
     automatically resolves the site root page from the TYPO3 Site Configuration.
 
-3.  Fill in the credentials
+3.  Choose Frontend or Backend tab
 
-    The form displays the following fields:
+    The module has two tabs:
 
-    .. confval:: Tenant ID
+    - **Frontend** -- configure Azure credentials for frontend user login on this site
+    - **Backend** -- manage backend login configurations (list, create, edit, delete)
 
-        :type: string
+..  _configuration-frontend:
 
-        The **Directory (tenant) ID** from your Microsoft Entra ID app registration.
+Frontend configuration
+----------------------
 
-    .. confval:: Client ID
+The Frontend tab displays the following fields:
 
-        :type: string
+.. confval:: Tenant ID
 
-        The **Application (client) ID** from your Microsoft Entra ID app registration.
+    :type: string
 
-    .. confval:: Client Secret
+    The **Directory (tenant) ID** from your Microsoft Entra ID app registration.
 
-        :type: string (password)
+.. confval:: Client ID
 
-        The **Client Secret Value** from your Microsoft Entra ID app registration.
+    :type: string
 
-        ..  attention::
-            This is the secret **Value**, not the Secret ID.
+    The **Application (client) ID** from your Microsoft Entra ID app registration.
 
-        The secret is encrypted using PHP Sodium before being stored in the
-        database. It is never displayed in the form after saving. If a secret is
-        already stored, a green indicator is shown. Leave the field empty to keep
-        the existing secret, or enter a new value to replace it.
+.. confval:: Client Secret
 
-    .. confval:: Redirect URI (Frontend)
+    :type: string (password)
 
-        :type: string (URL)
+    The **Client Secret Value** from your Microsoft Entra ID app registration.
 
-        The OAuth callback URL for **frontend** login. This must match one of the
-        redirect URIs registered in your Azure app.
+    ..  attention::
+        This is the secret **Value**, not the Secret ID.
 
-        Example: ``https://your-domain.com/your-login-page``
+    The secret is encrypted using PHP Sodium before being stored in the
+    database. It is never displayed in the form after saving. If a secret is
+    already stored, a green indicator is shown. Leave the field empty to keep
+    the existing secret, or enter a new value to replace it.
 
-    .. confval:: Redirect URI (Backend)
+.. confval:: Redirect URI (Frontend)
 
-        :type: string (URL)
+    :type: string (URL)
 
-        The OAuth callback URL for **backend** login. This must match one of the
-        redirect URIs registered in your Azure app.
+    The OAuth callback URL for **frontend** login. This must match one of the
+    redirect URIs registered in your Azure app.
 
-        Example: ``https://your-domain.com/typo3/azure-login/callback``
+    Example: ``https://your-domain.com/your-login-page``
 
-4.  Save
+.. confval:: Clone from Backend Config
 
-    Click the save button in the document header. A success message confirms the
-    configuration has been saved.
+    :type: dropdown
 
-..  important::
-    The backend module requires admin access. It is only available to TYPO3
-    administrators.
+    If backend configurations exist, you can clone Tenant ID, Client ID, and
+    (optionally) the encrypted Client Secret from one of them. You will be
+    prompted to enter a separate frontend Redirect URI.
+
+..  _configuration-auto-create:
+
+Frontend user auto-creation
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+When a user authenticates via Microsoft but has no matching ``fe_users`` record,
+the extension can automatically create a **disabled** account. An administrator
+must then enable the account before the user can sign in.
+
+.. confval:: Auto-create frontend users
+
+    :type: boolean
+    :Default: false
+
+    When enabled, a disabled frontend user account is automatically created for
+    authenticated Microsoft users who do not yet have an account.
+
+.. confval:: User Storage Page
+
+    :type: integer (page ID)
+    :Default: 0
+
+    Page ID (PID) where new frontend user records will be stored. Use 0 for the
+    root level. A page browser is provided to select the page visually.
+
+.. confval:: Default User Groups
+
+    :type: multi-select
+
+    Groups assigned to newly created frontend users. Hold Ctrl/Cmd to select
+    multiple groups.
+
+..  _configuration-backend:
+
+Backend configuration
+---------------------
+
+The Backend tab shows a **list of backend login configurations**. Each
+configuration represents a separate "Sign in with Microsoft" button on the
+TYPO3 backend login screen. This allows multiple Azure tenants or app
+registrations to be used for backend login.
+
+Each backend configuration has the following fields:
+
+.. confval:: Enabled
+
+    :type: boolean
+    :Default: true
+
+    Enable or disable this backend login configuration. Disabled configurations
+    will not show a login button.
+
+.. confval:: Login Button Label
+
+    :type: string (required)
+
+    Header shown above the login button on the backend login page (e.g. company
+    name or tenant name).
+
+.. confval:: Show Label on Login
+
+    :type: boolean
+    :Default: true
+
+    Show the login button label above the sign-in button on the backend login
+    page.
+
+.. confval:: Tenant ID
+
+    :type: string
+
+    The **Directory (tenant) ID** from your Microsoft Entra ID app registration.
+
+.. confval:: Client ID
+
+    :type: string
+
+    The **Application (client) ID** from your Microsoft Entra ID app registration.
+
+.. confval:: Client Secret
+
+    :type: string (password)
+
+    The **Client Secret Value** from your Microsoft Entra ID app registration.
+
+.. confval:: Redirect URI (Backend)
+
+    :type: read-only (auto-derived)
+
+    The backend OAuth callback URL is **automatically derived** from the
+    registered TYPO3 backend route. It is displayed as a read-only field with a
+    copy button. Register this URL as a redirect URI in your Azure app
+    registration.
+
+    The URL follows the pattern: ``https://your-domain.com/typo3/azure-login/callback``
 
 ..  _configuration-encryption:
 
@@ -157,26 +255,34 @@ The following settings are available:
     :type: string
     :Default: (empty)
 
-    The OAuth callback URL for **backend** login.
-
-    Example: ``https://your-domain.com/typo3/azure-login/callback``
+    The OAuth callback URL for **backend** login (legacy setting).
 
     ..  note::
-        The backend callback route ``/typo3/azure-login/callback`` is
-        automatically registered by the extension.
+        When using the backend module, the backend redirect URI is automatically
+        derived from the TYPO3 route configuration. This setting is only used
+        as part of the Extension Configuration fallback.
 
 ..  _configuration-resolution-order:
 
 Configuration resolution order
 ==============================
 
-The extension resolves Azure credentials in the following order:
+The extension resolves Azure credentials differently for frontend and backend:
 
-1. **Database configuration** for the current site root page (from the backend module)
-2. **Extension Configuration** (global fallback from ``ext_conf_template.txt``)
+**Frontend login:**
 
-If a database record exists for the site but has an empty Tenant ID, it is
-treated as unconfigured and the extension falls back to Extension Configuration.
+1. Database configuration for the current site root page (from the backend module)
+2. Extension Configuration (global fallback)
+
+**Backend login:**
+
+1. Configuration by UID (if a specific config was selected)
+2. Database configuration for the current site root page
+3. Global backend configuration (``site_root_page_id = 0``)
+4. Extension Configuration (global fallback)
+
+If a database record exists but has an empty Tenant ID, it is treated as
+unconfigured and the extension falls back to the next source.
 
 ..  _configuration-typoscript:
 
@@ -235,11 +341,11 @@ The authentication flow is handled entirely by the extension:
    appropriate user table (``fe_users`` or ``be_users``).
 5. If a matching, non-disabled user is found, they are logged in and
    redirected to the return URL.
-
-..  important::
-    The extension does **not** create new user accounts. A matching
-    ``fe_users`` or ``be_users`` record with the same email address must
-    already exist in TYPO3.
+6. For frontend login: if no matching user is found and **auto-create** is
+   enabled, a disabled ``fe_users`` record is created. The user sees a message
+   that their account is pending activation.
+7. For backend login: if no matching user is found, the user is redirected back
+   to the login page with an error message.
 
 Security notes
 ==============
@@ -251,6 +357,13 @@ Security notes
   ``encryptionKey`` and has a 10-minute TTL to prevent CSRF and replay attacks.
 - **Per-site isolation**: Each TYPO3 site can have its own Azure credentials,
   preventing credential leakage across multi-site installations.
+- **SameSite cookie handling**: The middleware preserves session cookies on the
+  OAuth callback redirect and downgrades ``SameSite=Strict`` to ``SameSite=Lax``
+  to ensure the browser sends cookies after the cross-site redirect from
+  Microsoft.
+- **Stale parameter stripping**: The middleware removes stale ``azure_login_error``
+  and ``azure_login_success`` query parameters from the return URL before
+  appending the current result, preventing parameter accumulation on retries.
 - Never commit client secrets to version control.
 - Use separate Azure app registrations for development, staging, and production.
 - Rotate client secrets regularly before their expiration date.

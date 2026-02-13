@@ -166,6 +166,81 @@
                         </div>
                     </div>
 
+                    <div class="form-section mt-4">
+                        <h4>
+                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.autoCreateSection" />
+                        </h4>
+                        <p class="text-muted">
+                            <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.autoCreateSection.description" />
+                        </p>
+
+                        <div class="row mb-3">
+                            <div class="col-sm-9 offset-sm-3">
+                                <div class="form-check">
+                                    <input type="hidden" name="data[autoCreateFeUser]" value="0" />
+                                    <input type="checkbox" class="form-check-input" id="autoCreateFeUser"
+                                           name="data[autoCreateFeUser]" value="1"
+                                           {f:if(condition: config.autoCreateFeUser, then: 'checked="checked"')} />
+                                    <label class="form-check-label" for="autoCreateFeUser">
+                                        <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.autoCreateFeUser" />
+                                    </label>
+                                </div>
+                                <div class="form-text">
+                                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.autoCreateFeUser.description" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label" for="feUserStoragePid">
+                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.feUserStoragePid" />
+                            </label>
+                            <div class="col-sm-9">
+                                <div class="input-group">
+                                    <input type="hidden" id="feUserStoragePid" name="data[feUserStoragePid]" value="{config.feUserStoragePid}" />
+                                    <span class="form-control" id="feUserStoragePid_title">{feUserStoragePidTitle}</span>
+                                    <button type="button" class="btn btn-default" id="feUserStoragePid_browse"
+                                            data-element-browser-url="{elementBrowserUrl}"
+                                            title="Browse pages">
+                                        <core:icon identifier="actions-insert-record" size="small" />
+                                    </button>
+                                    <button type="button" class="btn btn-default" id="feUserStoragePid_clear"
+                                            title="Clear"
+                                            style="{f:if(condition: '{config.feUserStoragePid} > 0', else: 'display:none')}">
+                                        <core:icon identifier="actions-close" size="small" />
+                                    </button>
+                                </div>
+                                <div class="form-text">
+                                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.feUserStoragePid.description" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <label class="col-sm-3 col-form-label" for="defaultFeGroups">
+                                <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.defaultFeGroups" />
+                            </label>
+                            <div class="col-sm-9">
+                                <select class="form-control" id="defaultFeGroups" name="data[defaultFeGroups][]" multiple="multiple" size="5">
+                                    <f:for each="{feGroups}" as="group">
+                                        <f:variable name="isSelected" value="0" />
+                                        <f:for each="{selectedFeGroupUids}" as="selectedUid">
+                                            <f:if condition="{selectedUid} == {group.uid}">
+                                                <f:variable name="isSelected" value="1" />
+                                            </f:if>
+                                        </f:for>
+                                        <option value="{group.uid}" {f:if(condition: isSelected, then: 'selected="selected"')}>
+                                            {group.title} (UID: {group.uid})
+                                        </option>
+                                    </f:for>
+                                </select>
+                                <div class="form-text">
+                                    <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.defaultFeGroups.description" />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="mt-4">
                         <button type="submit" class="btn btn-primary">
                             <core:icon identifier="actions-document-save" size="small" />

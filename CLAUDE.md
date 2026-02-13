@@ -41,8 +41,10 @@ The extension handles two login contexts (FE and BE) through a shared middleware
    - Updates `$GLOBALS['TYPO3_REQUEST']` so the auth chain can read the attribute
    - Injects login trigger fields into request body (`login_status=login` for BE, `logintype=login` for FE)
 4. **`AzureLoginAuthService`** (in TYPO3's auth chain) looks up user by email in `fe_users`/`be_users`, returns 200 (authenticated)
-6. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
-7. **Middleware redirects** to the return URL from state (HTTP 303)
+5. **Middleware checks login result**: For FE, if login fails and auto-create is enabled, creates a disabled fe_user. For BE, redirects to `/typo3/login` with error code.
+6. **Middleware strips stale login params** from the return URL before appending the current result
+7. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
+8. **Middleware redirects** to the return URL from state (HTTP 303)
 
 ### Frontend Login
 
@@ -79,7 +81,7 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 
 | Class | Purpose |
 |-------|---------|
-| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params, per-site config resolution |
+| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params, per-site config resolution. Backend redirect URI is auto-derived from route config via `getBackendCallbackUrl()` |
 | `Service/EncryptionService` | Sodium-based authenticated encryption for client secrets using `sodium_crypto_secretbox`; key derived from TYPO3 encryption key |
 | `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret |
 | `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
@@ -100,24 +102,42 @@ Managed via the backend module (Web > Azure Login). One record per site root pag
 
 | Column | Description |
 |--------|-------------|
-| `site_root_page_id` | TYPO3 site root page ID (unique key) |
+| `site_root_page_id` | TYPO3 site root page ID (0 for backend-only configs) |
+| `enabled` | Whether this config is active (default 1) |
+| `show_label` | Show the login button label on the backend login page (default 1) |
+| `backend_login_label` | Label/header shown above the backend login button (e.g. company name) |
 | `tenant_id` | Microsoft Entra Directory (Tenant) ID |
 | `client_id` | Application (Client) ID from Azure App Registration |
 | `client_secret_encrypted` | Sodium-encrypted client secret |
 | `redirect_uri_frontend` | OAuth callback URL for frontend login |
-| `redirect_uri_backend` | OAuth callback URL for backend login |
+| `redirect_uri_backend` | Legacy field, no longer used for OAuth flow (backend URI is auto-derived from route config) |
+| `auto_create_fe_user` | Enable auto-creation of disabled fe_users on first Azure login |
+| `default_fe_groups` | CSV of fe_group UIDs assigned to auto-created users |
+| `fe_user_storage_pid` | PID where auto-created fe_user records are stored |
+
+#### Backend Redirect URI (auto-derived)
+
+The backend OAuth redirect URI is **not manually configured**. It is automatically derived from the registered backend route `azure_login_callback` in `Configuration/Backend/Routes.php` using TYPO3's `BackendUriBuilder::buildUriFromRoute()`. This produces the absolute URL (e.g. `https://example.com/typo3/azure-login/callback`). The backend config form shows this URL as a read-only field with a copy button so admins can register it in Azure AD.
 
 #### Extension Configuration (fallback — global)
 
-Settings in `ext_conf_template.txt`: `tenantId`, `clientId`, `clientSecret`, `redirectUriFrontend`, `redirectUriBackend`.
+Settings in `ext_conf_template.txt`: `tenantId`, `clientId`, `clientSecret`, `redirectUriFrontend`.
 
 Used when no database record exists for the current site.
 
 #### Config Resolution Order
 
 `AzureOAuthService::getConfiguration()`:
-1. If `siteRootPageId > 0`, try database via `AzureConfigurationRepository`
-2. If no DB record or tenant ID is empty, fall back to `ExtensionConfiguration::get('ok_azure_login')`
+
+**Backend** (`loginType === 'backend'`):
+1. If `configUid > 0`, try by UID via `AzureConfigurationRepository::findByUid()`
+2. If `siteRootPageId > 0`, try by site via `AzureConfigurationRepository::findBySiteRootPageId()`
+3. Try global backend config (site_root_page_id = 0)
+4. Fall back to `ExtensionConfiguration::get('ok_azure_login')`
+
+**Frontend** (`loginType === 'frontend'`):
+1. If `siteRootPageId > 0`, try database via `AzureConfigurationRepository::findBySiteRootPageId()`
+2. Fall back to `ExtensionConfiguration::get('ok_azure_login')`
 
 #### Encryption
 
@@ -143,12 +163,18 @@ TypoScript (`constants.typoscript` / `setup.typoscript`) only configures Fluid t
 ```sql
 CREATE TABLE tx_okazurelogin_configuration (
     site_root_page_id int(11) unsigned DEFAULT '0' NOT NULL,
+    enabled tinyint(1) unsigned DEFAULT '1' NOT NULL,
+    show_label tinyint(1) unsigned DEFAULT '1' NOT NULL,
+    backend_login_label varchar(255) DEFAULT '' NOT NULL,
     tenant_id varchar(255) DEFAULT '' NOT NULL,
     client_id varchar(255) DEFAULT '' NOT NULL,
     client_secret_encrypted text,
     redirect_uri_frontend varchar(1024) DEFAULT '' NOT NULL,
     redirect_uri_backend varchar(1024) DEFAULT '' NOT NULL,
-    UNIQUE KEY site_root (site_root_page_id)
+    auto_create_fe_user tinyint(1) unsigned DEFAULT '0' NOT NULL,
+    default_fe_groups varchar(255) DEFAULT '' NOT NULL,
+    fe_user_storage_pid int(11) unsigned DEFAULT '0' NOT NULL,
+    KEY site_root (site_root_page_id)
 );
 ```
 
@@ -246,6 +272,16 @@ foreach ($response->getHeader('Set-Cookie') as $cookie) {
     $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
 }
 ```
+
+### Return URL must be stripped of stale login params
+
+When a user retries login from a page that already has `?azure_login_error=...` in the URL, that URL becomes the new OAuth `returnUrl` stored in the state parameter. The middleware then appends another `azure_login_error` or `azure_login_success`, causing parameter accumulation.
+
+`AzureOAuthMiddleware::stripLoginParams()` removes `azure_login_error` and `azure_login_success` from the return URL before appending the current result.
+
+### Login success takes priority over error display
+
+`LoginController::showAction` must check `azure_login_success` before `azure_login_error`. When the auth flow ultimately succeeds, only the success message is shown — even if stale error params somehow survive in the URL.
 
 ## Known Issues
 

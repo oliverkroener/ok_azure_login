@@ -74,11 +74,11 @@ class AzureConfigurationRepository
         $rows = $qb->select('*')
             ->from(self::TABLE)
             ->where(
+                $qb->expr()->eq('site_root_page_id', $qb->createNamedParameter(0, Connection::PARAM_INT)),
                 $qb->expr()->eq('enabled', $qb->createNamedParameter(1, Connection::PARAM_INT)),
                 $qb->expr()->neq('tenant_id', $qb->createNamedParameter('')),
                 $qb->expr()->neq('client_id', $qb->createNamedParameter('')),
-                $qb->expr()->neq('client_secret_encrypted', $qb->createNamedParameter('')),
-                $qb->expr()->neq('redirect_uri_backend', $qb->createNamedParameter(''))
+                $qb->expr()->neq('client_secret_encrypted', $qb->createNamedParameter(''))
             )
             ->executeQuery()
             ->fetchAllAssociative();
@@ -155,6 +155,9 @@ class AzureConfigurationRepository
             'client_id' => $data['clientId'] ?? '',
             'redirect_uri_frontend' => $data['redirectUriFrontend'] ?? '',
             'redirect_uri_backend' => $data['redirectUriBackend'] ?? '',
+            'auto_create_fe_user' => (int)($data['autoCreateFeUser'] ?? false),
+            'default_fe_groups' => $data['defaultFeGroups'] ?? '',
+            'fe_user_storage_pid' => (int)($data['feUserStoragePid'] ?? 0),
             'tstamp' => time(),
         ];
 
@@ -302,6 +305,9 @@ class AzureConfigurationRepository
             'redirectUriFrontend' => $row['redirect_uri_frontend'] ?? '',
             'redirectUriBackend' => $row['redirect_uri_backend'] ?? '',
             'backendLoginLabel' => $row['backend_login_label'] ?? '',
+            'autoCreateFeUser' => (bool)($row['auto_create_fe_user'] ?? false),
+            'defaultFeGroups' => $row['default_fe_groups'] ?? '',
+            'feUserStoragePid' => (int)($row['fe_user_storage_pid'] ?? 0),
         ];
     }
 }
