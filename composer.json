@@ -9,7 +9,7 @@
             "email": "ok@oliver-kroener.de"
         }
     ],
-    "version": "1.0.0",
+    "version": "2.0.0",
     "require": {
         "php": "^7.4",
         "typo3/cms-core": "^10.4",

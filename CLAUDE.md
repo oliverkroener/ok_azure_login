@@ -8,22 +8,29 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Extension key**: `ok_azure_login`
 **Namespace**: `OliverKroener\OkAzureLogin\`
-**TYPO3 compatibility**: 11.5
-**PHP**: ^8.1
+**Version**: 2.0.0
+**TYPO3 compatibility**: 10.4
+**PHP**: ^7.4
 
 ## Development Context
 
-This package lives at `backend/packages/ok-azure-login/` within the parent monorepo. It is a **Git submodule** with its own repository — commits must be made inside this directory first, then the parent repo reference updated.
-
-See the root `CLAUDE.md` for DDEV setup, composer commands, and testing infrastructure.
+This package lives within a parent monorepo. It is a **Git submodule** with its own repository — commits must be made inside this directory first, then the parent repo reference updated.
 
 ```bash
 # From the DDEV project (backend/ as composer root):
-ddev exec composer typo3:flush   # Clear caches after any config/class changes
+ddev exec composer typo3:flush    # Clear caches after any config/class changes
 ddev typo3 database:updateschema  # Apply schema changes after modifying ext_tables.sql
 ```
 
 No package-level build, lint, or test commands exist yet. Use the parent monorepo's `composer ci:static` and `composer ci:tests` for quality checks.
+
+### Documentation Generation
+
+```bash
+make docs        # Generate docs via Docker (pulls latest image)
+make docs-fast   # Generate docs (uses cached Docker image)
+make docs-watch  # Watch Documentation/ and auto-regenerate (requires inotify-tools)
+```
 
 ## Architecture
 
@@ -31,24 +38,25 @@ No package-level build, lint, or test commands exist yet. Use the parent monorep
 
 The extension handles two login contexts (FE and BE) through a shared middleware-based OAuth flow:
 
-1. **User clicks "Sign in"** — authorize URL built by `AzureOAuthService::buildAuthorizeUrl()` with HMAC-signed state parameter (includes `siteRootPageId` for per-site config)
+1. **User clicks "Sign in"** — authorize URL built by `AzureOAuthService::buildAuthorizeUrl()` with HMAC-signed state parameter (includes `siteRootPageId` and `configUid` for per-site/per-config resolution)
 2. **Microsoft authenticates** — redirects back with `code` + `state` query params
 3. **`AzureOAuthMiddleware`** intercepts the callback (runs before TYPO3 auth middleware in both stacks):
    - Resolves site context from request attribute (FE) or state payload (BE)
-   - Validates HMAC-signed state
-   - Exchanges code for user info via Microsoft Graph `me()` endpoint
+   - Validates HMAC-signed state (10-minute TTL)
+   - Exchanges code for access token via Guzzle, then fetches user info via Graph SDK v1 `me()` endpoint
    - Stores user data in `azure_login_user` request attribute
    - Updates `$GLOBALS['TYPO3_REQUEST']` so the auth chain can read the attribute
    - Injects login trigger fields into request body (`login_status=login` for BE, `logintype=login` for FE)
-4. **`AzureLoginAuthService`** (in TYPO3's auth chain) looks up user by email in `fe_users`/`be_users`, returns 200 (authenticated)
-6. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
-7. **Middleware redirects** to the return URL from state (HTTP 303)
+4. **`AzureLoginAuthService`** (in TYPO3's auth chain, priority 82) looks up user by email in `fe_users`/`be_users`, returns 200 (authenticated)
+5. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
+6. **Middleware redirects** to the return URL from state (HTTP 303) with `azure_login_success` or `azure_login_error` query params
 
 ### Frontend Login
 
 - Extbase content element plugin (`okazurelogin_login`) with `LoginController::showAction`
 - Renders a "Login with Azure" button linking to the authorize URL
 - Shows configuration error message when Azure credentials are not set
+- FlexForm option: button theme (dark/light)
 - Template: `Templates/Login/Show.html`, Layout: `Layouts/Default.html`
 
 ### Frontend Logout
@@ -59,65 +67,57 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 
 ### Backend Login
 
-- **Login provider** (`AzureLoginProvider`) registered in `$GLOBALS['TYPO3_CONF_VARS']['EXTCONF']['backend']['loginProviders']`
-- Shows "Sign in with Microsoft" button on the `/typo3/` login screen as a separate tab
+- **Login provider** (`AzureLoginProvider`) **replaces** the default `UsernamePasswordLoginProvider` (unsets provider ID `1433416747` in `ext_localconf.php`)
+- Fetches all enabled backend configs via `findAllConfiguredForBackend()` and renders **multiple** "Sign in with Microsoft" buttons — one per enabled backend config with its own label
 - Template: `Templates/Login/AzureLoginForm.html` (uses `<f:layout name="Login" />` from EXT:backend)
 - Callback route: `/typo3/azure-login/callback` → `AzureCallbackController` (public access, no CSRF token required)
-- Iterates all sites via `SiteFinder` to find first site with valid backend OAuth config
 
 ### Backend Configuration Module
 
 - TYPO3 backend module under **Web** group with page tree navigation
 - Module key: `web_okazurelogin`, path: `/module/web/azure-login`
 - Admin-only access, icon: `ext-ok-azure-login-microsoft`
-- `ConfigurationController` with `editAction` (form) and `saveAction` (POST, PRG pattern)
-- Manages per-site Azure credentials stored in `tx_okazurelogin_configuration` table
+- `ConfigurationController` serves as a router via `handleRequest()`, delegating to:
+  - **Frontend config** (per-site): `editAction` (form) and `saveAction` (POST, PRG pattern) — resolved by site root page ID from page tree selection
+  - **Backend config list**: `backendListAction` — paginated (20 per page), with delete confirmation modals
+  - **Backend config edit**: `backendEditAction` / `backendSaveAction` / `backendDeleteAction`
+- Clone encrypted secrets between configs without decryption (encrypted blob copy)
 - Client secret encrypted with Sodium before storage, never sent to browser
 - Warns when TYPO3 encryption key is missing (red danger callout)
+- Form dirty-check via RequireJS module blocks navigation with unsaved changes
 
 ### Key Classes
 
 | Class | Purpose |
 |-------|---------|
-| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes for user info via Graph API, creates/validates HMAC-signed state params, per-site config resolution |
+| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes via Guzzle + Graph SDK v1 for user info, creates/validates HMAC-signed state params, per-site config resolution |
 | `Service/EncryptionService` | Sodium-based authenticated encryption for client secrets using `sodium_crypto_secretbox`; key derived from TYPO3 encryption key |
-| `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret |
+| `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret; supports both site-based (FE) and uid-based (BE) lookups |
 | `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
 | `Authentication/AzureLoginAuthService` | `AbstractAuthenticationService` subclass; looks up users by email in auth chain, returns 200 for Azure-authenticated requests |
-| `LoginProvider/AzureLoginProvider` | Backend login provider; renders "Sign in with Microsoft" button, resolves site context for backend OAuth |
+| `LoginProvider/AzureLoginProvider` | Backend login provider; renders multiple "Sign in with Microsoft" buttons (one per enabled backend config) |
 | `Controller/LoginController` | Extbase FE controller; `showAction` renders the frontend login button with configuration error handling |
 | `Controller/LogoutController` | Extbase FE controller; handles logout with optional Microsoft sign-out redirect |
-| `Controller/Backend/ConfigurationController` | Backend module controller; manages per-site Azure configuration with encryption key validation |
+| `Controller/Backend/ConfigurationController` | Backend module controller; manages per-site FE configs and global BE configs with encryption key validation |
 | `Controller/Backend/AzureCallbackController` | Backend route handler; redirects to `/typo3` after successful OAuth callback |
 
 ### Configuration
 
-Azure credentials are stored **per site** in the database table `tx_okazurelogin_configuration`, with **Extension Configuration** (`ext_conf_template.txt`) as a fallback for backward compatibility.
-
-#### Database Configuration (primary — per site)
-
-Managed via the backend module (Web > Azure Login). One record per site root page:
-
-| Column | Description |
-|--------|-------------|
-| `site_root_page_id` | TYPO3 site root page ID (unique key) |
-| `tenant_id` | Microsoft Entra Directory (Tenant) ID |
-| `client_id` | Application (Client) ID from Azure App Registration |
-| `client_secret_encrypted` | Sodium-encrypted client secret |
-| `redirect_uri_frontend` | OAuth callback URL for frontend login |
-| `redirect_uri_backend` | OAuth callback URL for backend login |
-
-#### Extension Configuration (fallback — global)
-
-Settings in `ext_conf_template.txt`: `tenantId`, `clientId`, `clientSecret`, `redirectUriFrontend`, `redirectUriBackend`.
-
-Used when no database record exists for the current site.
+Azure credentials are stored **per site** (frontend) or **per config record** (backend) in the database table `tx_okazurelogin_configuration`, with **Extension Configuration** (`ext_conf_template.txt`) as a fallback for backward compatibility.
 
 #### Config Resolution Order
 
 `AzureOAuthService::getConfiguration()`:
-1. If `siteRootPageId > 0`, try database via `AzureConfigurationRepository`
-2. If no DB record or tenant ID is empty, fall back to `ExtensionConfiguration::get('ok_azure_login')`
+
+**Backend** (`loginType === 'backend'`):
+1. By `configUid` (from state parameter) via `findByUid()`
+2. By `siteRootPageId` via `findBySiteRootPageId()`
+3. By `siteRootPageId = 0` (global backend config)
+4. Fallback: `ExtensionConfiguration::get('ok_azure_login')`
+
+**Frontend**:
+1. By `siteRootPageId` via `findBySiteRootPageId()`
+2. Fallback: `ExtensionConfiguration::get('ok_azure_login')`
 
 #### Encryption
 
@@ -130,10 +130,10 @@ TypoScript (`constants.typoscript` / `setup.typoscript`) only configures Fluid t
 
 ### Registration Points
 
-- **`ext_localconf.php`**: FE plugins (login + logout), auth service (subtypes `getUserFE,authUserFE,getUserBE,authUserBE`, priority 82), icon registration (`ext-ok-azure-login-microsoft`), backend login provider
+- **`ext_localconf.php`**: FE plugins (login + logout), auth service (subtypes `getUserFE,authUserFE,getUserBE,authUserBE`, priority 82), icon registration, backend login provider (replaces default), cHash exclusions for `code`/`state`/`azure_login_success`/`azure_login_error`, page TSconfig import
 - **`ext_tables.php`**: Backend configuration module registration via `addModule()` under Web group with page tree navigation
-- **`Configuration/Backend/Routes.php`**: `/azure-login/callback` route with `'access' => 'public'`, plus module sub-routes for save/list/edit/delete actions
-- **`Configuration/Services.yaml`**: DI config, `AzureLoginProvider` marked `public: true`
+- **`Configuration/Backend/Routes.php`**: `/azure-login/callback` route with `'access' => 'public'`, plus module sub-routes for save/backendList/backendEdit/backendSave/backendDelete
+- **`Configuration/Services.yaml`**: DI config; `AzureOAuthService`, `AzureConfigurationRepository`, and `AzureLoginProvider` marked `public: true`
 - **`Configuration/RequestMiddlewares.php`**: `AzureOAuthMiddleware` in both `frontend` (before FE auth) and `backend` (after routing, before BE auth) stacks
 - **`Configuration/TCA/Overrides/tt_content.php`**: FE content element plugin registration, static TypoScript
 - **`Configuration/page.tsconfig`**: New Content Element Wizard entries under custom "Azure Login" group
@@ -142,19 +142,29 @@ TypoScript (`constants.typoscript` / `setup.typoscript`) only configures Fluid t
 
 ```sql
 CREATE TABLE tx_okazurelogin_configuration (
+    uid int(11) unsigned NOT NULL auto_increment,
+    pid int(11) unsigned DEFAULT '0' NOT NULL,
+    tstamp int(11) unsigned DEFAULT '0' NOT NULL,
+    crdate int(11) unsigned DEFAULT '0' NOT NULL,
     site_root_page_id int(11) unsigned DEFAULT '0' NOT NULL,
+    enabled tinyint(1) unsigned DEFAULT '1' NOT NULL,
+    show_label tinyint(1) unsigned DEFAULT '1' NOT NULL,
+    backend_login_label varchar(255) DEFAULT '' NOT NULL,
     tenant_id varchar(255) DEFAULT '' NOT NULL,
     client_id varchar(255) DEFAULT '' NOT NULL,
     client_secret_encrypted text,
     redirect_uri_frontend varchar(1024) DEFAULT '' NOT NULL,
     redirect_uri_backend varchar(1024) DEFAULT '' NOT NULL,
-    UNIQUE KEY site_root (site_root_page_id)
+    PRIMARY KEY (uid),
+    KEY site_root (site_root_page_id)
 );
 ```
 
+Backend configs use `site_root_page_id = 0`; frontend configs use the actual site root page ID.
+
 ### Logging
 
-Both `AzureOAuthMiddleware` and `AzureLoginAuthService` implement `LoggerAwareInterface` and use PSR-3 `$this->logger->debug()` for diagnostic logging. To see these messages, configure TYPO3's log writer for the `OliverKroener.OkAzureLogin` namespace in `settings.php`:
+Both `AzureOAuthMiddleware` and `AzureLoginAuthService` implement `LoggerAwareInterface` and use PSR-3 `$this->logger->debug()` for diagnostic logging. Configure TYPO3's log writer for the `OliverKroener.OkAzureLogin` namespace:
 
 ```php
 'LOG' => [
@@ -174,8 +184,8 @@ Both `AzureOAuthMiddleware` and `AzureLoginAuthService` implement `LoggerAwareIn
 
 ### Dependencies
 
-- `microsoft/microsoft-graph` ^2 — Graph SDK for user profile retrieval
-- `microsoft/kiota-authentication-phpleague` ^1 — OAuth token handling via `AuthorizationCodeContext`
+- `microsoft/microsoft-graph` ^1.69 — Graph SDK v1 for user profile retrieval (`Graph` class, `Model\User`)
+- Token exchange done directly via `GuzzleHttp\Client` POST to Microsoft's token endpoint
 
 ### Languages
 
@@ -191,17 +201,30 @@ Language file groups:
 
 The extension requests `openid profile User.Read` (delegated permissions, user context).
 
-## TYPO3 11.5 Compatibility Notes
+### JavaScript Modules (RequireJS)
 
-These patterns are specific to the TYPO3 11.5 APIs used by this extension:
+All in `Resources/Public/JavaScript/Backend/`, loaded via `loadRequireJsModule('TYPO3/CMS/OkAzureLogin/Backend/{Name}')`:
+
+- `FormDirtyCheck.js` — Tracks unsaved form changes, blocks navigation with TYPO3 modal; integrates with `ConsumerScope` for page tree navigation and tab switching
+- `DeleteConfirm.js` — Delete confirmation modal for backend config list
+- `CloneConfig.js` — Clone backend config to frontend form (copies tenant, client, encrypted secret, editable redirect URI)
+- `CloneBackendConfig.js` — Clone between backend configs
+
+## TYPO3 10.4 Compatibility Notes
+
+These patterns are specific to the TYPO3 10.4 APIs used by this extension:
+
+### Entry point guard
+
+TYPO3 10 uses `defined('TYPO3_MODE') or die();` (v11+ uses `defined('TYPO3')` or `defined('TYPO3_MODE')`).
 
 ### Backend module registration
 
-TYPO3 11 uses `ExtensionManagementUtility::addModule()` in `ext_tables.php` with a `routeTarget` pointing to a controller method. Module sub-routes are registered in `Configuration/Backend/Routes.php`. The v12+ `Configuration/Backend/Modules.php` format is not supported.
+TYPO3 10 uses `ExtensionManagementUtility::addModule()` in `ext_tables.php` with a `routeTarget` pointing to a controller method. Module sub-routes are registered in `Configuration/Backend/Routes.php`. The v12+ `Configuration/Backend/Modules.php` format is not supported.
 
 ### ModuleTemplate rendering pattern
 
-TYPO3 11 uses `ModuleTemplate` + `StandaloneView` (not `ModuleTemplateFactory`):
+TYPO3 10 uses `ModuleTemplate` + `StandaloneView` (not `ModuleTemplateFactory` from v12):
 
 ```php
 $moduleTemplate = GeneralUtility::makeInstance(ModuleTemplate::class);
@@ -213,11 +236,29 @@ return new HtmlResponse($moduleTemplate->renderContent());
 
 ### JavaScript modules
 
-TYPO3 11 uses RequireJS (not ES modules). JS files follow CamelCase naming (`Backend/DeleteConfirm.js`) and are loaded via `loadRequireJsModule('TYPO3/CMS/OkAzureLogin/Backend/DeleteConfirm')`.
+TYPO3 10 uses RequireJS (not ES modules). JS files follow CamelCase naming (`Backend/DeleteConfirm.js`) and are loaded via `loadRequireJsModule('TYPO3/CMS/OkAzureLogin/Backend/DeleteConfirm')`.
 
 ### Flash message severity
 
 Use integer constants from `AbstractMessage` (e.g., `FlashMessage::OK`) instead of the `ContextualFeedbackSeverity` enum (v12+).
+
+### PHP property declarations
+
+PHP 7.4 compatible: class properties use `/** @var Type */` docblocks instead of typed properties. Constructor promotion is not used.
+
+### Graph SDK v1 pattern
+
+This branch uses `microsoft/microsoft-graph` v1 (not v2/Kiota):
+
+```php
+$graph = new \Microsoft\Graph\Graph();
+$graph->setAccessToken($accessToken);
+$me = $graph->createRequest('GET', '/me')
+    ->setReturnType(\Microsoft\Graph\Model\User::class)
+    ->execute();
+```
+
+Token exchange uses `GuzzleHttp\Client` directly, not Kiota's `AuthorizationCodeContext`.
 
 ### Backend route public access
 
@@ -234,7 +275,7 @@ $GLOBALS['TYPO3_REQUEST'] = $request;
 
 ### SameSite cookie handling after cross-site OAuth redirect
 
-TYPO3 defaults `BE.cookieSameSite` to `strict`. After a cross-site redirect from Microsoft, browsers will NOT send `SameSite=Strict` cookies on the subsequent navigation. `FE.cookieSameSite` defaults to `lax`, so frontend is unaffected — but if it is ever changed to `strict`, the same issue will occur. The middleware must:
+TYPO3 defaults `BE.cookieSameSite` to `strict`. After a cross-site redirect from Microsoft, browsers will NOT send `SameSite=Strict` cookies on the subsequent navigation. The middleware must:
 
 1. Preserve `Set-Cookie` headers from the auth chain response (a new `RedirectResponse` discards all headers)
 2. Downgrade `SameSite=Strict` to `SameSite=Lax` on the callback redirect response only
