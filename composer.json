@@ -9,6 +9,20 @@
             "email": "ok@oliver-kroener.de"
         }
     ],
+    "keywords": [
+        "typo3",
+        "azure",
+        "entra",
+        "microsoft",
+        "oauth",
+        "sso",
+        "login",
+        "authentication",
+        "office365",
+        "graph-api",
+        "frontend-login",
+        "backend-login"
+    ],
     "version": "4.0.1",
     "require": {
         "php": "^8.1",
