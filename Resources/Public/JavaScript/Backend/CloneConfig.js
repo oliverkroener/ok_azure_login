@@ -21,7 +21,8 @@ define(['jquery', 'TYPO3/CMS/Backend/Modal', 'TYPO3/CMS/Backend/Severity'], func
         var tenantId = option.dataset.tenantId || '';
         var clientId = option.dataset.clientId || '';
         var hasSecret = option.dataset.hasSecret === '1';
-        var redirectUri = option.dataset.redirectUri || '';
+        var redirectFrontendField = document.getElementById('redirectUriFrontend');
+        var redirectUri = (redirectFrontendField ? redirectFrontendField.value : '') || '';
         var sourceUid = option.value;
 
         var title = select.dataset.cloneConfirmTitle || 'Clone Configuration';
