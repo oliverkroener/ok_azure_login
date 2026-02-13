@@ -116,8 +116,8 @@
                 <target>Weiterleitungs-URI (Backend)</target>
             </trans-unit>
             <trans-unit id="label.redirectUriBackend.description" xml:space="preserve">
-                <source>OAuth callback URL for backend login (e.g. https://example.com/typo3/azure-login/callback)</source>
-                <target>OAuth-Callback-URL f&#xfc;r Backend-Anmeldung (z.B. https://example.com/typo3/azure-login/callback)</target>
+                <source>Register this URL as redirect URI in your Azure App Registration.</source>
+                <target>Registrieren Sie diese URL als Weiterleitungs-URI in Ihrer Azure App-Registrierung.</target>
             </trans-unit>
             <trans-unit id="warning.encryptionKeyMissing.title" xml:space="preserve">
                 <source>Encryption Key Missing</source>
@@ -194,6 +194,38 @@
             <trans-unit id="confirm.clone.redirectNoteBackend" xml:space="preserve">
                 <source>Please configure the correct Redirect URI for this backend configuration.</source>
                 <target>Bitte konfigurieren Sie die korrekte Weiterleitungs-URI f&#xfc;r diese Backend-Konfiguration.</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateSection" xml:space="preserve">
+                <source>Frontend User Auto-Creation</source>
+                <target>Automatische Frontend-Benutzer-Erstellung</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateSection.description" xml:space="preserve">
+                <source>When a user authenticates via Microsoft but has no matching frontend user account, a disabled account can be created automatically. An administrator must then enable the account before the user can sign in.</source>
+                <target>Wenn sich ein Benutzer &#xfc;ber Microsoft authentifiziert, aber kein passendes Frontend-Benutzerkonto hat, kann automatisch ein deaktiviertes Konto erstellt werden. Ein Administrator muss das Konto dann freischalten, bevor sich der Benutzer anmelden kann.</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateFeUser" xml:space="preserve">
+                <source>Auto-create frontend users</source>
+                <target>Frontend-Benutzer automatisch erstellen</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateFeUser.description" xml:space="preserve">
+                <source>When enabled, a disabled frontend user account is automatically created for authenticated Microsoft users who do not yet have an account.</source>
+                <target>Wenn aktiviert, wird automatisch ein deaktiviertes Frontend-Benutzerkonto f&#xfc;r authentifizierte Microsoft-Benutzer erstellt, die noch kein Konto haben.</target>
+            </trans-unit>
+            <trans-unit id="label.feUserStoragePid" xml:space="preserve">
+                <source>User Storage Page</source>
+                <target>Benutzer-Speicherseite</target>
+            </trans-unit>
+            <trans-unit id="label.feUserStoragePid.description" xml:space="preserve">
+                <source>Page ID (PID) where new frontend user records will be stored. Use 0 for the root level.</source>
+                <target>Seiten-ID (PID), auf der neue Frontend-Benutzerdatens&#xe4;tze gespeichert werden. Verwenden Sie 0 f&#xfc;r die Stammebene.</target>
+            </trans-unit>
+            <trans-unit id="label.defaultFeGroups" xml:space="preserve">
+                <source>Default User Groups</source>
+                <target>Standard-Benutzergruppen</target>
+            </trans-unit>
+            <trans-unit id="label.defaultFeGroups.description" xml:space="preserve">
+                <source>Groups assigned to newly created frontend users. Hold Ctrl/Cmd to select multiple groups.</source>
+                <target>Gruppen, die neu erstellten Frontend-Benutzern zugewiesen werden. Halten Sie Strg/Cmd gedr&#xfc;ckt, um mehrere Gruppen auszuw&#xe4;hlen.</target>
             </trans-unit>
             <trans-unit id="confirm.delete.title" xml:space="preserve">
                 <source>Delete Configuration</source>

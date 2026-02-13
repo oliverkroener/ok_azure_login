@@ -44,6 +44,9 @@
             <trans-unit id="tx_okazurelogin.error.configuration" xml:space="preserve">
                 <source>Azure Login is not configured. Please contact the administrator.</source>
             </trans-unit>
+            <trans-unit id="tx_okazurelogin.error.account_pending" xml:space="preserve">
+                <source>Your account has been created but is not yet activated. An administrator must enable your account before you can sign in.</source>
+            </trans-unit>
         </body>
     </file>
 </xliff>

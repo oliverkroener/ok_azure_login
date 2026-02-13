@@ -43,8 +43,6 @@
                             data-clone-label-tenant="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.tenantId')}"
                             data-clone-label-client="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientId')}"
                             data-clone-label-secret="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret')}"
-                            data-clone-label-redirect="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.redirectUriBackend')}"
-                            data-clone-redirect-note="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:confirm.clone.redirectNoteBackend')}"
                             data-clone-secret-cloned="{f:translate(key: 'LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.clientSecret.cloned')}">
                         <option value=""><f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.cloneFromOther.placeholder" /></option>
                         <f:for each="{otherConfigs}" as="cfg">
@@ -156,12 +154,16 @@
         </div>
 
         <div class="row mb-3">
-            <label class="col-sm-3 col-form-label" for="redirectUriBackend">
+            <label class="col-sm-3 col-form-label">
                 <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.redirectUriBackend" />
             </label>
             <div class="col-sm-9">
-                <input type="url" class="form-control" id="redirectUriBackend" name="data[redirectUriBackend]"
-                       value="{config.redirectUriBackend}" placeholder="https://example.com/typo3/azure-login/callback" />
+                <div class="input-group">
+                    <input type="text" class="form-control" id="backendCallbackUrl" value="{backendCallbackUrl}" readonly="readonly" onclick="this.select()" />
+                    <button type="button" class="btn btn-default" id="copyCallbackUrl" title="Copy URL">
+                        <core:icon identifier="actions-edit-copy" size="small" />
+                    </button>
+                </div>
                 <div class="form-text">
                     <f:translate key="LLL:EXT:ok_azure_login/Resources/Private/Language/locallang_be_module.xlf:label.redirectUriBackend.description" />
                 </div>

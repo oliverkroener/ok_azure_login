@@ -94,7 +94,7 @@ class AzureOAuthService
     }
 
     /**
-     * @return array{email: string, displayName: string}
+     * @return array{email: string, displayName: string, givenName: string, surname: string}
      */
     public function exchangeCodeForUserInfo(string $code, string $loginType): array
     {
@@ -135,6 +135,8 @@ class AzureOAuthService
         return [
             'email' => $me->getMail() ?? $me->getUserPrincipalName(),
             'displayName' => $me->getDisplayName() ?? '',
+            'givenName' => $me->getGivenName() ?? '',
+            'surname' => $me->getSurname() ?? '',
         ];
     }
 

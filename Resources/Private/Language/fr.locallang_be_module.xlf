@@ -116,8 +116,8 @@
                 <target>URI de redirection (Backend)</target>
             </trans-unit>
             <trans-unit id="label.redirectUriBackend.description" xml:space="preserve">
-                <source>OAuth callback URL for backend login (e.g. https://example.com/typo3/azure-login/callback)</source>
-                <target>URL de rappel OAuth pour la connexion backend (ex. https://example.com/typo3/azure-login/callback)</target>
+                <source>Register this URL as redirect URI in your Azure App Registration.</source>
+                <target>Enregistrez cette URL comme URI de redirection dans votre inscription d'application Azure.</target>
             </trans-unit>
             <trans-unit id="warning.encryptionKeyMissing.title" xml:space="preserve">
                 <source>Encryption Key Missing</source>
@@ -194,6 +194,38 @@
             <trans-unit id="confirm.clone.redirectNoteBackend" xml:space="preserve">
                 <source>Please configure the correct Redirect URI for this backend configuration.</source>
                 <target>Veuillez configurer l'URI de redirection correcte pour cette configuration backend.</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateSection" xml:space="preserve">
+                <source>Frontend User Auto-Creation</source>
+                <target>Cr&#xe9;ation automatique d'utilisateurs frontend</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateSection.description" xml:space="preserve">
+                <source>When a user authenticates via Microsoft but has no matching frontend user account, a disabled account can be created automatically. An administrator must then enable the account before the user can sign in.</source>
+                <target>Lorsqu'un utilisateur s'authentifie via Microsoft mais n'a pas de compte utilisateur frontend correspondant, un compte d&#xe9;sactiv&#xe9; peut &#xea;tre cr&#xe9;&#xe9; automatiquement. Un administrateur doit ensuite activer le compte avant que l'utilisateur puisse se connecter.</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateFeUser" xml:space="preserve">
+                <source>Auto-create frontend users</source>
+                <target>Cr&#xe9;er automatiquement les utilisateurs frontend</target>
+            </trans-unit>
+            <trans-unit id="label.autoCreateFeUser.description" xml:space="preserve">
+                <source>When enabled, a disabled frontend user account is automatically created for authenticated Microsoft users who do not yet have an account.</source>
+                <target>Lorsque cette option est activ&#xe9;e, un compte utilisateur frontend d&#xe9;sactiv&#xe9; est automatiquement cr&#xe9;&#xe9; pour les utilisateurs Microsoft authentifi&#xe9;s qui n'ont pas encore de compte.</target>
+            </trans-unit>
+            <trans-unit id="label.feUserStoragePid" xml:space="preserve">
+                <source>User Storage Page</source>
+                <target>Page de stockage des utilisateurs</target>
+            </trans-unit>
+            <trans-unit id="label.feUserStoragePid.description" xml:space="preserve">
+                <source>Page ID (PID) where new frontend user records will be stored. Use 0 for the root level.</source>
+                <target>ID de page (PID) o&#xf9; les nouveaux enregistrements d'utilisateurs frontend seront stock&#xe9;s. Utilisez 0 pour le niveau racine.</target>
+            </trans-unit>
+            <trans-unit id="label.defaultFeGroups" xml:space="preserve">
+                <source>Default User Groups</source>
+                <target>Groupes d'utilisateurs par d&#xe9;faut</target>
+            </trans-unit>
+            <trans-unit id="label.defaultFeGroups.description" xml:space="preserve">
+                <source>Groups assigned to newly created frontend users. Hold Ctrl/Cmd to select multiple groups.</source>
+                <target>Groupes attribu&#xe9;s aux utilisateurs frontend nouvellement cr&#xe9;&#xe9;s. Maintenez Ctrl/Cmd pour s&#xe9;lectionner plusieurs groupes.</target>
             </trans-unit>
             <trans-unit id="confirm.delete.title" xml:space="preserve">
                 <source>Delete Configuration</source>

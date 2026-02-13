@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Extension key**: `ok_azure_login`
 **Namespace**: `OliverKroener\OkAzureLogin\`
-**Version**: 2.0.0
+**Version**: 2.1.0
 **TYPO3 compatibility**: 10.4
 **PHP**: ^7.4
 
@@ -43,19 +43,32 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 3. **`AzureOAuthMiddleware`** intercepts the callback (runs before TYPO3 auth middleware in both stacks):
    - Resolves site context from request attribute (FE) or state payload (BE)
    - Validates HMAC-signed state (10-minute TTL)
-   - Exchanges code for access token via Guzzle, then fetches user info via Graph SDK v1 `me()` endpoint
+   - Strips stale `azure_login_error`/`azure_login_success` params from return URL via `stripLoginParams()`
+   - Exchanges code for access token via Guzzle, then fetches user info (email, displayName, givenName, surname) via Graph SDK v1 `me()` endpoint
    - Stores user data in `azure_login_user` request attribute
    - Updates `$GLOBALS['TYPO3_REQUEST']` so the auth chain can read the attribute
    - Injects login trigger fields into request body (`login_status=login` for BE, `logintype=login` for FE)
 4. **`AzureLoginAuthService`** (in TYPO3's auth chain, priority 82) looks up user by email in `fe_users`/`be_users`, returns 200 (authenticated)
-5. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
-6. **Middleware redirects** to the return URL from state (HTTP 303) with `azure_login_success` or `azure_login_error` query params
+5. **Middleware checks login result**: For FE, if login fails and auto-create is enabled, creates a disabled fe_user via `handleFailedFrontendLogin()`. For BE, redirects with error code.
+6. **Middleware preserves Set-Cookie headers** from the auth chain response and copies them to the redirect response, downgrading `SameSite=Strict` to `SameSite=Lax` for the callback only
+7. **Middleware redirects** to the return URL from state (HTTP 303) with `azure_login_success` or `azure_login_error` query params
+
+### Frontend User Auto-Creation
+
+When `auto_create_fe_user` is enabled for a site configuration:
+
+- If a Microsoft-authenticated user has no matching `fe_users` record, a **disabled** record is created automatically
+- The new user gets: email as username, displayName/givenName/surname from Graph API, a random password, configured default FE groups, and the configured storage PID
+- The user sees an "account pending" info message (blue, not red error)
+- An administrator must manually enable the account before the user can sign in
+- If the user already exists but is disabled, just show "account pending"
 
 ### Frontend Login
 
 - Extbase content element plugin (`okazurelogin_login`) with `LoginController::showAction`
 - Renders a "Login with Azure" button linking to the authorize URL
 - Shows configuration error message when Azure credentials are not set
+- Login success takes priority over error display (`azure_login_success` checked before `azure_login_error`)
 - FlexForm option: button theme (dark/light)
 - Template: `Templates/Login/Show.html`, Layout: `Layouts/Default.html`
 
@@ -78,9 +91,9 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 - Module key: `web_okazurelogin`, path: `/module/web/azure-login`
 - Admin-only access, icon: `ext-ok-azure-login-microsoft`
 - `ConfigurationController` serves as a router via `handleRequest()`, delegating to:
-  - **Frontend config** (per-site): `editAction` (form) and `saveAction` (POST, PRG pattern) — resolved by site root page ID from page tree selection
+  - **Frontend config** (per-site): `editAction` (form) and `saveAction` (POST, PRG pattern) — resolved by site root page ID from page tree selection. Includes auto-create FE user settings (checkbox, storage PID page browser, FE groups multi-select).
   - **Backend config list**: `backendListAction` — paginated (20 per page), with delete confirmation modals
-  - **Backend config edit**: `backendEditAction` / `backendSaveAction` / `backendDeleteAction`
+  - **Backend config edit**: `backendEditAction` / `backendSaveAction` / `backendDeleteAction`. Shows read-only callback URL with copy button (auto-derived from route config).
 - Clone encrypted secrets between configs without decryption (encrypted blob copy)
 - Client secret encrypted with Sodium before storage, never sent to browser
 - Warns when TYPO3 encryption key is missing (red danger callout)
@@ -90,15 +103,15 @@ The extension handles two login contexts (FE and BE) through a shared middleware
 
 | Class | Purpose |
 |-------|---------|
-| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes via Guzzle + Graph SDK v1 for user info, creates/validates HMAC-signed state params, per-site config resolution |
+| `Service/AzureOAuthService` | Core OAuth service: builds authorize URLs, exchanges codes via Guzzle + Graph SDK v1 for user info (email, displayName, givenName, surname), creates/validates HMAC-signed state params, per-site config resolution |
 | `Service/EncryptionService` | Sodium-based authenticated encryption for client secrets using `sodium_crypto_secretbox`; key derived from TYPO3 encryption key |
-| `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret; supports both site-based (FE) and uid-based (BE) lookups |
-| `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, injects auth data into request, preserves session cookies with SameSite=Lax on redirect |
+| `Domain/Repository/AzureConfigurationRepository` | CRUD for `tx_okazurelogin_configuration` table with transparent encrypt/decrypt of client secret; supports both site-based (FE) and uid-based (BE) lookups; maps auto-create fields |
+| `Middleware/AzureOAuthMiddleware` | PSR-15 middleware in both FE+BE stacks; resolves site context, intercepts OAuth callbacks, strips stale login params from return URL, injects auth data into request, auto-creates disabled fe_users on failed FE login when configured, preserves session cookies with SameSite=Lax on redirect |
 | `Authentication/AzureLoginAuthService` | `AbstractAuthenticationService` subclass; looks up users by email in auth chain, returns 200 for Azure-authenticated requests |
 | `LoginProvider/AzureLoginProvider` | Backend login provider; renders multiple "Sign in with Microsoft" buttons (one per enabled backend config) |
-| `Controller/LoginController` | Extbase FE controller; `showAction` renders the frontend login button with configuration error handling |
+| `Controller/LoginController` | Extbase FE controller; `showAction` renders the frontend login button with configuration error handling; success checked before error |
 | `Controller/LogoutController` | Extbase FE controller; handles logout with optional Microsoft sign-out redirect |
-| `Controller/Backend/ConfigurationController` | Backend module controller; manages per-site FE configs and global BE configs with encryption key validation |
+| `Controller/Backend/ConfigurationController` | Backend module controller; manages per-site FE configs (with auto-create settings) and global BE configs with encryption key validation, FE group fetching, page browser for storage PID, read-only callback URL |
 | `Controller/Backend/AzureCallbackController` | Backend route handler; redirects to `/typo3` after successful OAuth callback |
 
 ### Configuration
@@ -155,6 +168,9 @@ CREATE TABLE tx_okazurelogin_configuration (
     client_secret_encrypted text,
     redirect_uri_frontend varchar(1024) DEFAULT '' NOT NULL,
     redirect_uri_backend varchar(1024) DEFAULT '' NOT NULL,
+    auto_create_fe_user tinyint(1) unsigned DEFAULT '0' NOT NULL,
+    default_fe_groups varchar(255) DEFAULT '' NOT NULL,
+    fe_user_storage_pid int(11) unsigned DEFAULT '0' NOT NULL,
     PRIMARY KEY (uid),
     KEY site_root (site_root_page_id)
 );
@@ -209,6 +225,8 @@ All in `Resources/Public/JavaScript/Backend/`, loaded via `loadRequireJsModule('
 - `DeleteConfirm.js` — Delete confirmation modal for backend config list
 - `CloneConfig.js` — Clone backend config to frontend form (copies tenant, client, encrypted secret, editable redirect URI)
 - `CloneBackendConfig.js` — Clone between backend configs
+- `PageBrowser.js` — Element Browser integration for `feUserStoragePid` field; opens TYPO3 page browser popup, handles `typo3:elementBrowser:elementAdded` postMessage, updates hidden input and display label
+- `CopyCallbackUrl.js` — Copies the read-only backend callback URL to the OS clipboard; shows checkmark feedback
 
 ## TYPO3 10.4 Compatibility Notes
 
@@ -287,6 +305,12 @@ foreach ($response->getHeader('Set-Cookie') as $cookie) {
     $redirect = $redirect->withAddedHeader('Set-Cookie', $cookie);
 }
 ```
+
+### Return URL must be stripped of stale login params
+
+When a user retries login from a page that already has `?azure_login_error=...` in the URL, that URL becomes the new OAuth `returnUrl` stored in the state parameter. The middleware then appends another `azure_login_error` or `azure_login_success`, causing parameter accumulation.
+
+`AzureOAuthMiddleware::stripLoginParams()` removes `azure_login_error` and `azure_login_success` from the return URL before appending the current result.
 
 ## Known Issues
 
