@@ -1,38 +1,19 @@
 /**
  * Page browser integration for feUserStoragePid field.
- * Opens the TYPO3 Element Browser popup and handles the selected page.
+ * Opens the TYPO3 Element Browser in a modal iframe and handles the selected page.
  */
+import Modal from '@typo3/backend/modal.js';
+import { MessageUtility } from '@typo3/backend/utility/message-utility.js';
+
 const browseButton = document.getElementById('feUserStoragePid_browse');
 const clearButton = document.getElementById('feUserStoragePid_clear');
 const hiddenInput = document.getElementById('feUserStoragePid');
 const titleDisplay = document.getElementById('feUserStoragePid_title');
 
-if (browseButton) {
-    browseButton.addEventListener('click', () => {
-        const url = browseButton.dataset.elementBrowserUrl;
-        const popup = window.open(
-            url,
-            'typo3_element_browser',
-            'height=600,width=800,status=0,menubar=0,resizable=1,scrollbars=1'
-        );
-        if (popup) {
-            popup.focus();
-        }
-    });
-}
-
-if (clearButton) {
-    clearButton.addEventListener('click', () => {
-        if (hiddenInput) hiddenInput.value = '0';
-        if (titleDisplay) titleDisplay.textContent = '';
-        if (clearButton) clearButton.style.display = 'none';
-        if (hiddenInput) hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
-    });
-}
-
-// Listen for Element Browser postMessage callback.
-// TYPO3 sends: { actionName, fieldName, value: "table_uid" or "recordType_uid", label }
-window.addEventListener('message', (event) => {
+function handleMessage(event) {
+    if (!MessageUtility.verifyOrigin(event.origin)) {
+        return;
+    }
     if (!event.data || event.data.actionName !== 'typo3:elementBrowser:elementAdded') {
         return;
     }
@@ -40,9 +21,8 @@ window.addEventListener('message', (event) => {
     const value = event.data.value || '';
     const label = event.data.label || '';
 
-    // value is "pages_<uid>" (from record list) or "<doktype>_<uid>" (from tree) — extract uid
-    const parts = value.split('_');
-    const uid = parseInt(parts[parts.length - 1], 10);
+    // value is "pages_<uid>" or "<doktype>_<uid>" — extract uid
+    const uid = parseInt(value.split('_').pop(), 10);
 
     if (uid > 0) {
         if (hiddenInput) {
@@ -56,4 +36,28 @@ window.addEventListener('message', (event) => {
             clearButton.style.display = '';
         }
     }
-});
+}
+
+if (browseButton) {
+    browseButton.addEventListener('click', () => {
+        const url = browseButton.dataset.elementBrowserUrl;
+        const modal = Modal.advanced({
+            type: Modal.types.iframe,
+            content: url,
+            size: Modal.sizes.large,
+        });
+        window.addEventListener('message', handleMessage);
+        modal.addEventListener('typo3-modal-hide', () => {
+            window.removeEventListener('message', handleMessage);
+        });
+    });
+}
+
+if (clearButton) {
+    clearButton.addEventListener('click', () => {
+        if (hiddenInput) hiddenInput.value = '0';
+        if (titleDisplay) titleDisplay.textContent = '';
+        if (clearButton) clearButton.style.display = 'none';
+        if (hiddenInput) hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+}
