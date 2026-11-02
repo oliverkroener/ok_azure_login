@@ -17,7 +17,7 @@
                interlink-shortcode="oliverkroener/ok-azure-login"
     />
     <project title="Azure Login"
-             release="4.0.3"
+             release="4.0.4"
              version="4.0"
              copyright="since 2024 by Oliver Kroener &amp; Contributors"/>
     <inventory id="t3coreapi" url="https://docs.typo3.org/m/typo3/reference-coreapi/main/en-us/"/>

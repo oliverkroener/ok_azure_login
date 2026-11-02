@@ -50,11 +50,15 @@ class AzureLoginProvider implements LoginProviderInterface
             $view->assign('azureLoginError', $azureLoginError);
         }
 
-        // Add extension template paths so the login form template can be resolved
-        $templatePaths = $view->getRenderingContext()->getTemplatePaths();
-        $currentPaths = $templatePaths->getTemplateRootPaths();
-        $currentPaths[] = 'EXT:ok_azure_login/Resources/Private/Templates';
-        $templatePaths->setTemplateRootPaths($currentPaths);
+        // Add extension template paths so the login form template can be resolved.
+        // The core hands over a FluidViewAdapter; ViewInterface itself has no
+        // rendering context, so guard the call instead of assuming the adapter.
+        if (method_exists($view, 'getRenderingContext')) {
+            $templatePaths = $view->getRenderingContext()->getTemplatePaths();
+            $currentPaths = $templatePaths->getTemplateRootPaths();
+            $currentPaths[] = 'EXT:ok_azure_login/Resources/Private/Templates';
+            $templatePaths->setTemplateRootPaths($currentPaths);
+        }
 
         return 'Login/AzureLoginForm';
     }
